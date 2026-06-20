@@ -3,9 +3,9 @@ import { NavLink } from 'react-router-dom';
 export default function NavBar() {
   return (
     <nav className="flex items-center gap-6 px-6 h-14 border-b border-white/10 bg-[#111320]">
-      <span className="text-blue-400 font-bold text-lg tracking-tight select-none">
+      <NavLink to="/" className="text-blue-400 font-bold text-lg tracking-tight select-none hover:opacity-80 transition-opacity">
         Matrix<span className="text-white">Canvas</span>
-      </span>
+      </NavLink>
 
       <div className="flex gap-1 ml-2">
         {[
