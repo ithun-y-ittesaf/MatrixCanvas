@@ -3,10 +3,9 @@ import gsap from 'gsap';
 import { Matrix2x2 } from '../math/Matrix2x2';
 import { useAppStore } from '../store/appStore';
 
-const SCALE = 60;       // pixels per unit
-const GRID_RANGE = 7;   // draw ±7 units
+const SCALE = 60;
+const GRID_RANGE = 7;
 
-// ── Arrow helper ─────────────────────────────────────────────────────────────
 function drawArrow(
   ctx: CanvasRenderingContext2D,
   from: [number, number],
@@ -22,7 +21,6 @@ function drawArrow(
   const angle = Math.atan2(dy, dx);
   const head = Math.min(14, len * 0.35);
 
-  ctx.save();
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.lineWidth = width;
@@ -45,14 +43,9 @@ function drawArrow(
   );
   ctx.closePath();
   ctx.fill();
-  ctx.restore();
 }
 
-// ── Main draw function ────────────────────────────────────────────────────────
-function drawScene(canvas: HTMLCanvasElement) {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
+function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   const { matrixValues, animProgress } = useAppStore.getState();
   const W = canvas.width;
   const H = canvas.height;
@@ -64,88 +57,70 @@ function drawScene(canvas: HTMLCanvasElement) {
   const target = new Matrix2x2(matrixValues);
   const display = Matrix2x2.identity().lerp(target, animProgress);
 
-  // World → canvas (y flipped)
   const tc = (wx: number, wy: number): [number, number] => {
     const [tx, ty] = display.multiply([wx, wy]);
     return [cx + tx * SCALE, cy - ty * SCALE];
   };
 
-  // ── Original (identity) grid — very faint ───────────────────────────────
-  ctx.save();
+  // Identity grid — batch all lines into one path
   ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 1;
+  ctx.lineCap = 'butt';
+  ctx.beginPath();
   for (let i = -GRID_RANGE; i <= GRID_RANGE; i++) {
-    ctx.beginPath();
     ctx.moveTo(cx + i * SCALE, cy - GRID_RANGE * SCALE);
     ctx.lineTo(cx + i * SCALE, cy + GRID_RANGE * SCALE);
-    ctx.stroke();
-
-    ctx.beginPath();
     ctx.moveTo(cx - GRID_RANGE * SCALE, cy + i * SCALE);
     ctx.lineTo(cx + GRID_RANGE * SCALE, cy + i * SCALE);
-    ctx.stroke();
   }
-  ctx.restore();
+  ctx.stroke();
 
-  // ── Transformed grid ────────────────────────────────────────────────────
-  ctx.save();
-
-  // Vertical lines (x = integer constant)
-  ctx.strokeStyle = 'rgba(96, 165, 250, 0.35)';  // blue
-  ctx.lineWidth = 1;
+  // Transformed vertical grid lines (blue) — one path
+  ctx.strokeStyle = 'rgba(96, 165, 250, 0.35)';
+  ctx.beginPath();
   for (let i = -GRID_RANGE; i <= GRID_RANGE; i++) {
-    if (i === 0) continue; // drawn as axis later
-    ctx.beginPath();
+    if (i === 0) continue;
     const [x1, y1] = tc(i, -GRID_RANGE);
     const [x2, y2] = tc(i,  GRID_RANGE);
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
-    ctx.stroke();
   }
+  ctx.stroke();
 
-  // Horizontal lines (y = integer constant)
-  ctx.strokeStyle = 'rgba(248, 113, 113, 0.3)';  // red
+  // Transformed horizontal grid lines (red) — one path
+  ctx.strokeStyle = 'rgba(248, 113, 113, 0.3)';
+  ctx.beginPath();
   for (let i = -GRID_RANGE; i <= GRID_RANGE; i++) {
     if (i === 0) continue;
-    ctx.beginPath();
     const [x1, y1] = tc(-GRID_RANGE, i);
     const [x2, y2] = tc( GRID_RANGE, i);
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
-    ctx.stroke();
   }
-  ctx.restore();
+  ctx.stroke();
 
-  // ── Transformed axes ────────────────────────────────────────────────────
-  ctx.save();
+  // Transformed axes
   ctx.lineWidth = 1.8;
 
-  // x-axis (y=0)
   ctx.strokeStyle = 'rgba(248, 113, 113, 0.75)';
   ctx.beginPath();
-  const [xa1, ya1] = tc(-GRID_RANGE, 0);
-  const [xa2, ya2] = tc( GRID_RANGE, 0);
-  ctx.moveTo(xa1, ya1);
-  ctx.lineTo(xa2, ya2);
+  ctx.moveTo(...tc(-GRID_RANGE, 0));
+  ctx.lineTo(...tc( GRID_RANGE, 0));
   ctx.stroke();
 
-  // y-axis (x=0)
   ctx.strokeStyle = 'rgba(96, 165, 250, 0.75)';
   ctx.beginPath();
-  const [xb1, yb1] = tc(0, -GRID_RANGE);
-  const [xb2, yb2] = tc(0,  GRID_RANGE);
-  ctx.moveTo(xb1, yb1);
-  ctx.lineTo(xb2, yb2);
+  ctx.moveTo(...tc(0, -GRID_RANGE));
+  ctx.lineTo(...tc(0,  GRID_RANGE));
   ctx.stroke();
-  ctx.restore();
 
-  // ── Basis vectors ĩ and ĵ ───────────────────────────────────────────────
+  // Basis vectors
   const origin: [number, number] = [cx, cy];
-  drawArrow(ctx, origin, tc(1, 0), '#f87171', 2.5); // î — red
-  drawArrow(ctx, origin, tc(0, 1), '#60a5fa', 2.5); // ĵ — blue
+  ctx.lineCap = 'round';
+  drawArrow(ctx, origin, tc(1, 0), '#f87171', 2.5);
+  drawArrow(ctx, origin, tc(0, 1), '#60a5fa', 2.5);
 
-  // ── Basis vector labels ─────────────────────────────────────────────────
-  ctx.save();
+  // Labels
   ctx.font = 'bold 13px Inter, sans-serif';
   ctx.fillStyle = '#f87171';
   const [ix, iy] = tc(1, 0);
@@ -154,49 +129,62 @@ function drawScene(canvas: HTMLCanvasElement) {
   ctx.fillStyle = '#60a5fa';
   const [jx, jy] = tc(0, 1);
   ctx.fillText('ĵ', jx + 6, jy - 4);
-  ctx.restore();
 
-  // ── Origin dot ──────────────────────────────────────────────────────────
-  ctx.save();
+  // Origin dot
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.restore();
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function TransformCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const animTrigger = useAppStore((s) => s.animTrigger);
+  const ctxRef       = useRef<CanvasRenderingContext2D | null>(null);
+  const dirtyRef     = useRef(true);
+
+  const animTrigger    = useAppStore((s) => s.animTrigger);
   const setAnimProgress = useAppStore((s) => s.setAnimProgress);
 
-  // Resize canvas to fill container
+  // Initialise canvas size + cache context
   useEffect(() => {
     const container = containerRef.current;
-    const canvas = canvasRef.current;
+    const canvas    = canvasRef.current;
     if (!container || !canvas) return;
 
-    const ro = new ResizeObserver(() => {
-      canvas.width = container.clientWidth;
+    ctxRef.current = canvas.getContext('2d');
+
+    const resize = () => {
+      canvas.width  = container.clientWidth;
       canvas.height = container.clientHeight;
-    });
+      dirtyRef.current = true;
+    };
+
+    const ro = new ResizeObserver(resize);
     ro.observe(container);
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    resize();
 
     return () => ro.disconnect();
   }, []);
 
-  // RAF render loop
+  // Mark canvas dirty whenever any store value changes
+  useEffect(() => {
+    return useAppStore.subscribe(() => {
+      dirtyRef.current = true;
+    });
+  }, []);
+
+  // RAF loop — only redraws when dirty
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     let rafId: number;
 
     const loop = () => {
-      drawScene(canvas);
+      if (dirtyRef.current && ctxRef.current) {
+        drawScene(canvas, ctxRef.current);
+        dirtyRef.current = false;
+      }
       rafId = requestAnimationFrame(loop);
     };
     rafId = requestAnimationFrame(loop);
@@ -211,7 +199,7 @@ export default function TransformCanvas() {
       t: 1,
       duration: 1.4,
       ease: 'power2.inOut',
-      onUpdate() { setAnimProgress(obj.t); },
+      onUpdate()  { setAnimProgress(obj.t); },
       onComplete() { setAnimProgress(1); },
     });
     return () => { tween.kill(); };

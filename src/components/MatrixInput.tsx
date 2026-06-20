@@ -126,21 +126,25 @@ export default function MatrixInput() {
           Presets ▾
         </button>
 
-        {presetsOpen && (
-          <div className="absolute bottom-full mb-1 left-0 right-0 rounded-lg
-                          bg-[#1a1d2e] border border-white/10 overflow-hidden z-10 shadow-xl">
-            {PRESETS.map((p) => (
-              <button
-                key={p.label}
-                onClick={() => applyPreset(p.values)}
-                className="block w-full text-left px-3 py-2 text-sm text-slate-300
-                           hover:bg-white/5 hover:text-white transition-colors"
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div
+          className={`absolute bottom-full mb-1 left-0 right-0 rounded-lg
+                      bg-[#1a1d2e] border border-white/10 overflow-hidden z-10 shadow-xl
+                      transition-all duration-150 ease-out origin-bottom
+                      ${presetsOpen
+                        ? 'opacity-100 translate-y-0 pointer-events-auto'
+                        : 'opacity-0 translate-y-1 pointer-events-none'}`}
+        >
+          {PRESETS.map((p) => (
+            <button
+              key={p.label}
+              onClick={() => applyPreset(p.values)}
+              className="block w-full text-left px-3 py-2 text-sm text-slate-300
+                         hover:bg-white/5 hover:text-white transition-colors"
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
