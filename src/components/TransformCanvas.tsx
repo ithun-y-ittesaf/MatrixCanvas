@@ -45,8 +45,20 @@ function drawArrow(
   ctx.fill();
 }
 
+function drawDashedArrow(
+  ctx: CanvasRenderingContext2D,
+  from: [number, number],
+  to: [number, number],
+  color: string,
+) {
+  ctx.save();
+  ctx.setLineDash([5, 4]);
+  drawArrow(ctx, from, to, color, 1.5);
+  ctx.restore();
+}
+
 function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
-  const { matrixValues, animProgress } = useAppStore.getState();
+  const { matrixValues, animProgress, customVectors } = useAppStore.getState();
   const W = canvas.width;
   const H = canvas.height;
   const cx = W / 2;
@@ -129,6 +141,24 @@ function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = '#60a5fa';
   const [jx, jy] = tc(0, 1);
   ctx.fillText('ĵ', jx + 6, jy - 4);
+
+  // Custom vectors — faint dashed ghost at original position, solid arrow at transformed position
+  for (const v of customVectors) {
+    const originalPoint: [number, number] = [cx + v.x * SCALE, cy - v.y * SCALE];
+    drawDashedArrow(ctx, origin, originalPoint, 'rgba(255,255,255,0.25)');
+
+    const transformedPoint = tc(v.x, v.y);
+    drawArrow(ctx, origin, transformedPoint, v.color, 2.2);
+
+    ctx.font = '12px Inter, sans-serif';
+    ctx.fillStyle = v.color;
+    const [tx, ty] = display.multiply([v.x, v.y]);
+    ctx.fillText(
+      `(${parseFloat(tx.toFixed(2))}, ${parseFloat(ty.toFixed(2))})`,
+      transformedPoint[0] + 6,
+      transformedPoint[1] - 4,
+    );
+  }
 
   // Origin dot
   ctx.fillStyle = '#ffffff';
