@@ -57,8 +57,32 @@ function drawDashedArrow(
   ctx.restore();
 }
 
+function polygonPath(ctx: CanvasRenderingContext2D, points: [number, number][]) {
+  if (points.length === 0) return;
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], points[0][1]);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i][0], points[i][1]);
+  }
+  ctx.closePath();
+}
+
+function drawDashedPolygon(
+  ctx: CanvasRenderingContext2D,
+  points: [number, number][],
+  color: string,
+) {
+  ctx.save();
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  polygonPath(ctx, points);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
-  const { matrixValues, animProgress, customVectors } = useAppStore.getState();
+  const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
   const W = canvas.width;
   const H = canvas.height;
   const cx = W / 2;
@@ -158,6 +182,15 @@ function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
       transformedPoint[0] + 6,
       transformedPoint[1] - 4,
     );
+  }
+
+  // Shapes — faint dashed ghost outline at original vertices
+  for (const shape of shapes) {
+    if (shape.vertices.length < 2) continue;
+    const originalPoints = shape.vertices.map(
+      ([x, y]): [number, number] => [cx + x * SCALE, cy - y * SCALE],
+    );
+    drawDashedPolygon(ctx, originalPoints, 'rgba(255,255,255,0.25)');
   }
 
   // Origin dot
