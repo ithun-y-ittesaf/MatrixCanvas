@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { MouseEvent } from 'react';
 import gsap from 'gsap';
 import { Matrix2x2 } from '../math/Matrix2x2';
 import { useAppStore } from '../store/appStore';
@@ -259,7 +260,12 @@ function drawScene(
   return shapeAreas;
 }
 
-export default function TransformCanvas() {
+interface TransformCanvasProps {
+  // Shape id currently being built via click-to-add-vertex; null when not drawing.
+  drawingShapeId?: string | null;
+}
+
+export default function TransformCanvas({ drawingShapeId = null }: TransformCanvasProps) {
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const ctxRef       = useRef<CanvasRenderingContext2D | null>(null);
@@ -329,12 +335,32 @@ export default function TransformCanvas() {
     return () => { tween.kill(); };
   }, [animTrigger, setAnimProgress]);
 
+  // Click-to-add-vertex while a polygon is being drawn. Converts the click's
+  // pixel position back to grid/world space by inverting the same cx/cy/SCALE
+  // mapping used to draw the identity grid and shape ghost outlines above.
+  const handleCanvasClick = (e: MouseEvent<HTMLCanvasElement>) => {
+    if (!drawingShapeId) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    const wx = (px - cx) / SCALE;
+    const wy = -(py - cy) / SCALE;
+    useAppStore.getState().addPolygonVertex(drawingShapeId, [wx, wy]);
+  };
+
   return (
     <div ref={containerRef} className="w-full h-full relative">
       <canvas
         ref={canvasRef}
+        onClick={handleCanvasClick}
         className="block w-full h-full"
-        style={{ background: '#0d0f1a' }}
+        style={{ background: '#0d0f1a', cursor: drawingShapeId ? 'crosshair' : 'default' }}
       />
 
       {/* Legend */}
