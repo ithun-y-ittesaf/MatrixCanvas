@@ -27,6 +27,7 @@ interface AppStore {
   // incremented each time "Animate" is clicked to re-trigger the tween
   animTrigger: number;
   customVectors: CustomVector[];
+  shapes: TransformableShape[];
 
   setMatrixValue: (row: 0 | 1, col: 0 | 1, value: number) => void;
   setMatrixValues: (values: Matrix2x2Values) => void;
@@ -35,6 +36,10 @@ interface AppStore {
   addVector: (x: number, y: number) => void;
   removeVector: (id: string) => void;
   updateVector: (id: string, x: number, y: number) => void;
+  addShape: (type: ShapeType, vertices: [number, number][]) => void;
+  removeShape: (id: string) => void;
+  addPolygonVertex: (shapeId: string, vertex: [number, number]) => void;
+  clearShapes: () => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -42,6 +47,7 @@ export const useAppStore = create<AppStore>((set) => ({
   animProgress: 1,
   animTrigger: 0,
   customVectors: [],
+  shapes: [],
 
   setMatrixValue: (row, col, value) =>
     set((state) => {
@@ -87,4 +93,31 @@ export const useAppStore = create<AppStore>((set) => ({
         v.id === id ? { ...v, x, y } : v
       ),
     })),
+
+  addShape: (type, vertices) =>
+    set((state) => ({
+      shapes: [
+        ...state.shapes,
+        {
+          id: crypto.randomUUID(),
+          type,
+          vertices,
+          color: VECTOR_COLORS[state.shapes.length % VECTOR_COLORS.length],
+        },
+      ],
+    })),
+
+  removeShape: (id) =>
+    set((state) => ({
+      shapes: state.shapes.filter((s) => s.id !== id),
+    })),
+
+  addPolygonVertex: (shapeId, vertex) =>
+    set((state) => ({
+      shapes: state.shapes.map((s) =>
+        s.id === shapeId ? { ...s, vertices: [...s.vertices, vertex] } : s
+      ),
+    })),
+
+  clearShapes: () => set({ shapes: [] }),
 }));
