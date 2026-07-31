@@ -20,6 +20,26 @@ export interface TransformableShape {
 
 const VECTOR_COLORS = ['#facc15', '#34d399', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
 
+// Preset vertex sets, centered on the origin so transforms like scale and
+// rotation behave predictably. Used to offer one-click shape presets, the
+// same way PRESETS in utils/presets.ts offers matrix presets.
+export function rectanglePresetVertices(): [number, number][] {
+  return [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+  ];
+}
+
+export function trianglePresetVertices(): [number, number][] {
+  return [
+    [0, 1],
+    [-1, -1],
+    [1, -1],
+  ];
+}
+
 interface AppStore {
   matrixValues: Matrix2x2Values;
   // 0 = identity, 1 = fully transformed (live as user types)
