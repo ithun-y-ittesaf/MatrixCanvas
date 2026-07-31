@@ -81,6 +81,23 @@ function drawDashedPolygon(
   ctx.restore();
 }
 
+function drawFilledPolygon(
+  ctx: CanvasRenderingContext2D,
+  points: [number, number][],
+  color: string,
+) {
+  ctx.save();
+  polygonPath(ctx, points);
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
   const W = canvas.width;
@@ -184,13 +201,23 @@ function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     );
   }
 
-  // Shapes — faint dashed ghost outline at original vertices
+  // Shapes — faint dashed ghost outline at original vertices, solid filled
+  // polygon at transformed vertices
   for (const shape of shapes) {
     if (shape.vertices.length < 2) continue;
+
     const originalPoints = shape.vertices.map(
       ([x, y]): [number, number] => [cx + x * SCALE, cy - y * SCALE],
     );
     drawDashedPolygon(ctx, originalPoints, 'rgba(255,255,255,0.25)');
+
+    const transformedWorld = shape.vertices.map(
+      (v): [number, number] => display.multiply(v),
+    );
+    const transformedPoints = transformedWorld.map(
+      ([tx, ty]): [number, number] => [cx + tx * SCALE, cy - ty * SCALE],
+    );
+    drawFilledPolygon(ctx, transformedPoints, shape.color);
   }
 
   // Origin dot
