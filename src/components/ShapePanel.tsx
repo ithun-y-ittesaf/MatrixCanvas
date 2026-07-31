@@ -48,6 +48,12 @@ export default function ShapePanel({ drawingShapeId, onDrawingShapeIdChange }: S
     onDrawingShapeIdChange(null);
   };
 
+  const handleCancelDrawing = () => {
+    if (!drawingShapeId) return;
+    removeShape(drawingShapeId);
+    onDrawingShapeIdChange(null);
+  };
+
   const visibleShapes = shapes.filter((s) => s.id !== drawingShapeId);
 
   return (
@@ -79,13 +85,22 @@ export default function ShapePanel({ drawingShapeId, onDrawingShapeIdChange }: S
 
       <div className="font-sans">
         {drawingShapeId ? (
-          <button
-            onClick={handleFinishDrawing}
-            className="w-full px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500
-                       active:scale-95 text-white transition-all"
-          >
-            Finish shape
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleFinishDrawing}
+              className="flex-1 px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500
+                         active:scale-95 text-white transition-all"
+            >
+              Finish shape
+            </button>
+            <button
+              onClick={handleCancelDrawing}
+              className="px-2.5 py-1 rounded-md bg-slate-700 hover:bg-red-500/80
+                         active:scale-95 text-white transition-all"
+            >
+              Cancel
+            </button>
+          </div>
         ) : (
           <button
             onClick={handleStartDrawing}
@@ -99,7 +114,9 @@ export default function ShapePanel({ drawingShapeId, onDrawingShapeIdChange }: S
 
       {drawingShapeId && (
         <p className="text-slate-500 text-[10px] font-sans">
-          Click on the canvas to add vertices.
+          Click on the canvas to add vertices
+          {' '}({shapes.find((s) => s.id === drawingShapeId)?.vertices.length ?? 0} placed,{' '}
+          3 minimum).
         </p>
       )}
 

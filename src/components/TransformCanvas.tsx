@@ -114,6 +114,7 @@ function polygonArea(vertices: [number, number][]): number {
 function drawScene(
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
+  drawingShapeId: string | null,
 ): Record<string, number> {
   const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
   const W = canvas.width;
@@ -204,11 +205,27 @@ function drawScene(
   // never washes out a vector arrow sitting on top of it.
   const shapeAreas: Record<string, number> = {};
   for (const shape of shapes) {
-    if (shape.vertices.length < 2) continue;
+    const isDrawing = shape.id === drawingShapeId;
+    if (shape.vertices.length === 0) continue;
 
     const originalPoints = shape.vertices.map(
       ([x, y]): [number, number] => [cx + x * SCALE, cy - y * SCALE],
     );
+
+    // While the shape is being actively drawn, mark each placed vertex with
+    // a dot so a click registers visually even before there are enough
+    // points to form a line (2) or a fillable polygon (3).
+    if (isDrawing) {
+      ctx.fillStyle = shape.color;
+      for (const [px, py] of originalPoints) {
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    if (shape.vertices.length < 2) continue;
+
     drawDashedPolygon(ctx, originalPoints, 'rgba(255,255,255,0.25)');
 
     const transformedWorld = shape.vertices.map(
@@ -274,6 +291,10 @@ export default function TransformCanvas({ drawingShapeId = null }: TransformCanv
   const dirtyRef     = useRef(true);
   // Shape id -> transformed area, refreshed every redraw for future UI to read
   const shapeAreasRef = useRef<Record<string, number>>({});
+  // Kept in sync with the drawingShapeId prop so the RAF loop (mounted once,
+  // with an empty dep array) always reads the latest value.
+  const drawingShapeIdRef = useRef(drawingShapeId);
+  drawingShapeIdRef.current = drawingShapeId;
 
   const animTrigger    = useAppStore((s) => s.animTrigger);
   const setAnimProgress = useAppStore((s) => s.setAnimProgress);
@@ -306,6 +327,12 @@ export default function TransformCanvas({ drawingShapeId = null }: TransformCanv
     });
   }, []);
 
+  // Also mark dirty when the drawing session itself starts/stops, since that
+  // can change what's on canvas (e.g. finishing) without a store update.
+  useEffect(() => {
+    dirtyRef.current = true;
+  }, [drawingShapeId]);
+
   // RAF loop — only redraws when dirty
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -314,7 +341,7 @@ export default function TransformCanvas({ drawingShapeId = null }: TransformCanv
 
     const loop = () => {
       if (dirtyRef.current && ctxRef.current) {
-        shapeAreasRef.current = drawScene(canvas, ctxRef.current);
+        shapeAreasRef.current = drawScene(canvas, ctxRef.current, drawingShapeIdRef.current);
         dirtyRef.current = false;
       }
       rafId = requestAnimationFrame(loop);
@@ -377,6 +404,14 @@ export default function TransformCanvas({ drawingShapeId = null }: TransformCanv
           <span className="text-slate-300">ĵ (basis y)</span>
         </div>
       </div>
+
+      {/* Drawing-mode hint */}
+      {drawingShapeId && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm
+                        rounded-lg px-3 py-1.5 text-xs text-slate-200 pointer-events-none">
+          Click to add polygon vertices — Finish or Cancel in the Shapes panel
+        </div>
+      )}
     </div>
   );
 }
