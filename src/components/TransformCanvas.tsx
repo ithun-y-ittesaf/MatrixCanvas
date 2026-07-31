@@ -199,26 +199,9 @@ function drawScene(
   const [jx, jy] = tc(0, 1);
   ctx.fillText('ĵ', jx + 6, jy - 4);
 
-  // Custom vectors — faint dashed ghost at original position, solid arrow at transformed position
-  for (const v of customVectors) {
-    const originalPoint: [number, number] = [cx + v.x * SCALE, cy - v.y * SCALE];
-    drawDashedArrow(ctx, origin, originalPoint, 'rgba(255,255,255,0.25)');
-
-    const transformedPoint = tc(v.x, v.y);
-    drawArrow(ctx, origin, transformedPoint, v.color, 2.2);
-
-    ctx.font = '12px Inter, sans-serif';
-    ctx.fillStyle = v.color;
-    const [tx, ty] = display.multiply([v.x, v.y]);
-    ctx.fillText(
-      `(${parseFloat(tx.toFixed(2))}, ${parseFloat(ty.toFixed(2))})`,
-      transformedPoint[0] + 6,
-      transformedPoint[1] - 4,
-    );
-  }
-
   // Shapes — faint dashed ghost outline at original vertices, solid filled
-  // polygon at transformed vertices
+  // polygon at transformed vertices. Drawn before vectors so a shape's fill
+  // never washes out a vector arrow sitting on top of it.
   const shapeAreas: Record<string, number> = {};
   for (const shape of shapes) {
     if (shape.vertices.length < 2) continue;
@@ -249,6 +232,25 @@ function drawScene(
     ctx.font = '12px Inter, sans-serif';
     ctx.fillStyle = shape.color;
     ctx.fillText(`Area: ${area.toFixed(2)}`, centroid[0] - 20, centroid[1]);
+  }
+
+  // Custom vectors — faint dashed ghost at original position, solid arrow at
+  // transformed position. Drawn after shapes so arrows stay crisp on top.
+  for (const v of customVectors) {
+    const originalPoint: [number, number] = [cx + v.x * SCALE, cy - v.y * SCALE];
+    drawDashedArrow(ctx, origin, originalPoint, 'rgba(255,255,255,0.25)');
+
+    const transformedPoint = tc(v.x, v.y);
+    drawArrow(ctx, origin, transformedPoint, v.color, 2.2);
+
+    ctx.font = '12px Inter, sans-serif';
+    ctx.fillStyle = v.color;
+    const [tx, ty] = display.multiply([v.x, v.y]);
+    ctx.fillText(
+      `(${parseFloat(tx.toFixed(2))}, ${parseFloat(ty.toFixed(2))})`,
+      transformedPoint[0] + 6,
+      transformedPoint[1] - 4,
+    );
   }
 
   // Origin dot
