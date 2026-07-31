@@ -122,7 +122,9 @@ export const useAppStore = create<AppStore>((set) => ({
           id: crypto.randomUUID(),
           type,
           vertices,
-          color: VECTOR_COLORS[state.shapes.length % VECTOR_COLORS.length],
+          // Offset from customVectors' cycling start so the first vector and
+          // the first shape don't land on the same color.
+          color: VECTOR_COLORS[(state.shapes.length + 3) % VECTOR_COLORS.length],
         },
       ],
     })),
