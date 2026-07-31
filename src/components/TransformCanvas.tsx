@@ -98,7 +98,22 @@ function drawFilledPolygon(
   ctx.restore();
 }
 
-function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+// Shoelace formula — works for any simple polygon, so it covers the
+// rectangle and triangle presets as well as freeform custom polygons.
+function polygonArea(vertices: [number, number][]): number {
+  let sum = 0;
+  for (let i = 0; i < vertices.length; i++) {
+    const [x1, y1] = vertices[i];
+    const [x2, y2] = vertices[(i + 1) % vertices.length];
+    sum += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(sum) / 2;
+}
+
+function drawScene(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+): Record<string, number> {
   const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
   const W = canvas.width;
   const H = canvas.height;
@@ -203,6 +218,7 @@ function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
 
   // Shapes — faint dashed ghost outline at original vertices, solid filled
   // polygon at transformed vertices
+  const shapeAreas: Record<string, number> = {};
   for (const shape of shapes) {
     if (shape.vertices.length < 2) continue;
 
@@ -218,6 +234,20 @@ function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
       ([tx, ty]): [number, number] => [cx + tx * SCALE, cy - ty * SCALE],
     );
     drawFilledPolygon(ctx, transformedPoints, shape.color);
+
+    const area = polygonArea(transformedWorld);
+    shapeAreas[shape.id] = area;
+
+    const centroid = transformedPoints.reduce(
+      (acc, [px, py]): [number, number] => [acc[0] + px, acc[1] + py],
+      [0, 0] as [number, number],
+    );
+    centroid[0] /= transformedPoints.length;
+    centroid[1] /= transformedPoints.length;
+
+    ctx.font = '12px Inter, sans-serif';
+    ctx.fillStyle = shape.color;
+    ctx.fillText(`Area: ${area.toFixed(2)}`, centroid[0] - 20, centroid[1]);
   }
 
   // Origin dot
@@ -225,6 +255,8 @@ function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   ctx.beginPath();
   ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
   ctx.fill();
+
+  return shapeAreas;
 }
 
 export default function TransformCanvas() {
@@ -232,6 +264,8 @@ export default function TransformCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const ctxRef       = useRef<CanvasRenderingContext2D | null>(null);
   const dirtyRef     = useRef(true);
+  // Shape id -> transformed area, refreshed every redraw for future UI to read
+  const shapeAreasRef = useRef<Record<string, number>>({});
 
   const animTrigger    = useAppStore((s) => s.animTrigger);
   const setAnimProgress = useAppStore((s) => s.setAnimProgress);
@@ -272,7 +306,7 @@ export default function TransformCanvas() {
 
     const loop = () => {
       if (dirtyRef.current && ctxRef.current) {
-        drawScene(canvas, ctxRef.current);
+        shapeAreasRef.current = drawScene(canvas, ctxRef.current);
         dirtyRef.current = false;
       }
       rafId = requestAnimationFrame(loop);
