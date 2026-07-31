@@ -26,8 +26,8 @@ export default function PlaygroundPage() {
         <VectorPanel />
       </div>
 
-      {/* Shape panel — top-right */}
-      <div className="absolute top-6 right-6">
+      {/* Shape panel — top-right, below the canvas's basis-vector legend */}
+      <div className="absolute top-24 right-6">
         <ShapePanel
           drawingShapeId={drawingShapeId}
           onDrawingShapeIdChange={setDrawingShapeId}
