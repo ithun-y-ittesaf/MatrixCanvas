@@ -8,6 +8,16 @@ export interface CustomVector {
   color: string;
 }
 
+export type ShapeType = 'rectangle' | 'triangle' | 'polygon';
+
+export interface TransformableShape {
+  id: string;
+  type: ShapeType;
+  // Vertices in original, untransformed space.
+  vertices: [number, number][];
+  color: string;
+}
+
 const VECTOR_COLORS = ['#facc15', '#34d399', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
 
 interface AppStore {
