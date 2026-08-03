@@ -67,7 +67,7 @@ function drawScene(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
   ctx.clearRect(0, 0, W, H);
 
   const target = new Matrix2x2(matrixValues);
-  const display = Matrix2x2.identity().lerp(target, animProgress);
+  const display = Matrix2x2.identity().interpolateDecomposed(target, animProgress);
 
   const tc = (wx: number, wy: number): [number, number] => {
     const [tx, ty] = display.multiply([wx, wy]);
