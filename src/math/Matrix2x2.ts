@@ -80,6 +80,48 @@ export class Matrix2x2 {
     ]);
   }
 
+  // Polar decomposition M = R * S (R rotation, S symmetric). atan2(c - b, a + d)
+  // is the closed-form rotation angle of R for any 2x2 M; S = R^T * M then falls
+  // out symmetric by construction, recovering M exactly when recomposed.
+  private polarDecompose(): { angle: number; s00: number; s01: number; s11: number } {
+    const { a, b, c, d } = this;
+    const angle = Math.atan2(c - b, a + d);
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const s00 = cos * a + sin * c;
+    const s01 = cos * b + sin * d;
+    const s10 = -sin * a + cos * c;
+    const s11 = -sin * b + cos * d;
+    return { angle, s00, s01: (s01 + s10) / 2, s11 };
+  }
+
+  // Interpolates toward `target` by decomposing both matrices into rotation +
+  // symmetric scale/shear, taking the shortest-path angle and lerping the scale
+  // part. Avoids `lerp`'s degenerate shrink-through-zero when animating rotations
+  // (e.g. identity -> 180° passes through a proper 90° rotation, not a flat matrix).
+  interpolateDecomposed(target: Matrix2x2, t: number): Matrix2x2 {
+    const from = this.polarDecompose();
+    const to = target.polarDecompose();
+
+    const twoPi = Math.PI * 2;
+    let delta = to.angle - from.angle;
+    delta = ((delta + Math.PI) % twoPi + twoPi) % twoPi - Math.PI;
+    const angle = from.angle + delta * t;
+
+    const l = (x: number, y: number) => x + (y - x) * t;
+    const s00 = l(from.s00, to.s00);
+    const s01 = l(from.s01, to.s01);
+    const s11 = l(from.s11, to.s11);
+
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    return new Matrix2x2([
+      [cos * s00 - sin * s01, cos * s01 - sin * s11],
+      [sin * s00 + cos * s01, sin * s01 + cos * s11],
+    ]);
+  }
+
   static identity(): Matrix2x2 {
     return new Matrix2x2([[1, 0], [0, 1]]);
   }
