@@ -27,7 +27,14 @@ interface ShapePanelProps {
 }
 
 export default function ShapePanel({ drawingShapeId, onDrawingShapeIdChange }: ShapePanelProps) {
-  const { matrixValues, shapes, addShape, removeShape } = useAppStore();
+  // Narrow selectors, not useAppStore() — the bare hook subscribes to the
+  // whole store, so this panel would otherwise fully re-render (and re-map
+  // its whole shape list) on every animProgress tick during the Animate
+  // tween, not just when a shape or the matrix actually changes.
+  const matrixValues = useAppStore((s) => s.matrixValues);
+  const shapes = useAppStore((s) => s.shapes);
+  const addShape = useAppStore((s) => s.addShape);
+  const removeShape = useAppStore((s) => s.removeShape);
   const m = new Matrix2x2(matrixValues);
 
   const handleAddRectangle = () => addShape('rectangle', rectanglePresetVertices());

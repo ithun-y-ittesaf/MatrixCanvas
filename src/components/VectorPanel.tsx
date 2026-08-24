@@ -7,7 +7,14 @@ function fmt(n: number): string {
 }
 
 export default function VectorPanel() {
-  const { matrixValues, customVectors, addVector, removeVector } = useAppStore();
+  // Narrow selectors, not useAppStore() — the bare hook subscribes to the
+  // whole store, so this panel would otherwise fully re-render (and re-map
+  // its whole vector list) on every animProgress tick during the Animate
+  // tween, not just when a vector or the matrix actually changes.
+  const matrixValues = useAppStore((s) => s.matrixValues);
+  const customVectors = useAppStore((s) => s.customVectors);
+  const addVector = useAppStore((s) => s.addVector);
+  const removeVector = useAppStore((s) => s.removeVector);
   const [x, setX] = useState('1');
   const [y, setY] = useState('1');
 
