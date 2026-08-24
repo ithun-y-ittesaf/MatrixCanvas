@@ -18,7 +18,10 @@ function fromStore(vals: Matrix2x2Values): Raw {
 }
 
 export default function MatrixInput() {
-  const { matrixValues, setMatrixValue, setMatrixValues, triggerAnimation } = useAppStore();
+  const {
+    matrixValues, setMatrixValue, setMatrixValues, triggerAnimation,
+    animProgress, setAnimProgress,
+  } = useAppStore();
   const [raw, setRaw] = useState<Raw>(() => fromStore(matrixValues));
   const [presetsOpen, setPresetsOpen] = useState(false);
   const presetsRef = useRef<HTMLDivElement>(null);
@@ -115,6 +118,25 @@ export default function MatrixInput() {
       >
         Animate
       </button>
+
+      {/* Scrub slider — manually drag through the identity -> matrix tween */}
+      <div className="w-full flex flex-col gap-1">
+        <div className="flex justify-between text-[10px] text-slate-500 font-sans">
+          <span>Identity</span>
+          <span>Scrub</span>
+          <span>Transformed</span>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.001}
+          value={animProgress}
+          onChange={(e) => setAnimProgress(parseFloat(e.target.value))}
+          className="w-full accent-blue-500 cursor-pointer"
+          aria-label="Animation progress"
+        />
+      </div>
 
       {/* Presets dropdown */}
       <div ref={presetsRef} className="relative w-full">
