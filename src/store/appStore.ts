@@ -46,12 +46,16 @@ interface AppStore {
   animProgress: number;
   // incremented each time "Animate" is clicked to re-trigger the tween
   animTrigger: number;
+  // true while the user is dragging the scrub slider — lets the GSAP tween
+  // driver know to back off and not fight manual scrubbing
+  isScrubbing: boolean;
   customVectors: CustomVector[];
   shapes: TransformableShape[];
 
   setMatrixValue: (row: 0 | 1, col: 0 | 1, value: number) => void;
   setMatrixValues: (values: Matrix2x2Values) => void;
   setAnimProgress: (t: number) => void;
+  setIsScrubbing: (scrubbing: boolean) => void;
   triggerAnimation: () => void;
   addVector: (x: number, y: number) => void;
   removeVector: (id: string) => void;
@@ -66,6 +70,7 @@ export const useAppStore = create<AppStore>((set) => ({
   matrixValues: [[1, 0], [0, 1]],
   animProgress: 1,
   animTrigger: 0,
+  isScrubbing: false,
   customVectors: [],
   shapes: [],
 
@@ -83,10 +88,15 @@ export const useAppStore = create<AppStore>((set) => ({
 
   setAnimProgress: (t) => set({ animProgress: t }),
 
+  setIsScrubbing: (scrubbing) => set({ isScrubbing: scrubbing }),
+
   triggerAnimation: () =>
     set((state) => ({
       animProgress: 0,
       animTrigger: state.animTrigger + 1,
+      // A fresh Animate click always wins over a stale scrub session (e.g.
+      // one where pointerup fired outside the slider).
+      isScrubbing: false,
     })),
 
   addVector: (x, y) =>

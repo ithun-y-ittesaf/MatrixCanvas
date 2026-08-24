@@ -20,7 +20,7 @@ function fromStore(vals: Matrix2x2Values): Raw {
 export default function MatrixInput() {
   const {
     matrixValues, setMatrixValue, setMatrixValues, triggerAnimation,
-    animProgress, setAnimProgress,
+    animProgress, setAnimProgress, setIsScrubbing,
   } = useAppStore();
   const [raw, setRaw] = useState<Raw>(() => fromStore(matrixValues));
   const [presetsOpen, setPresetsOpen] = useState(false);
@@ -133,6 +133,10 @@ export default function MatrixInput() {
           step={0.001}
           value={animProgress}
           onChange={(e) => setAnimProgress(parseFloat(e.target.value))}
+          onPointerDown={() => setIsScrubbing(true)}
+          onPointerUp={() => setIsScrubbing(false)}
+          onPointerCancel={() => setIsScrubbing(false)}
+          onBlur={() => setIsScrubbing(false)}
           className="w-full accent-blue-500 cursor-pointer"
           aria-label="Animation progress"
         />

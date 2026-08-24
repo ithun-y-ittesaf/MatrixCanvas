@@ -298,6 +298,8 @@ export default function TransformCanvas({ drawingShapeId = null }: TransformCanv
 
   const animTrigger    = useAppStore((s) => s.animTrigger);
   const setAnimProgress = useAppStore((s) => s.setAnimProgress);
+  const isScrubbing    = useAppStore((s) => s.isScrubbing);
+  const tweenRef       = useRef<gsap.core.Tween | null>(null);
 
   // Initialise canvas size + cache context
   useEffect(() => {
@@ -361,8 +363,17 @@ export default function TransformCanvas({ drawingShapeId = null }: TransformCanv
       onUpdate()  { setAnimProgress(obj.t); },
       onComplete() { setAnimProgress(1); },
     });
+    tweenRef.current = tween;
     return () => { tween.kill(); };
   }, [animTrigger, setAnimProgress]);
+
+  // Manually scrubbing the slider should win over any in-flight tween —
+  // kill it the moment scrubbing starts so the two stop fighting over
+  // animProgress. (triggerAnimation clears isScrubbing on its side, so a
+  // fresh Animate click still starts a clean tween afterwards.)
+  useEffect(() => {
+    if (isScrubbing) tweenRef.current?.kill();
+  }, [isScrubbing]);
 
   // Click-to-add-vertex while a polygon is being drawn. Converts the click's
   // pixel position back to grid/world space by inverting the same cx/cy/SCALE
