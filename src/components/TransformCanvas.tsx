@@ -52,10 +52,13 @@ function drawDashedArrow(
   to: [number, number],
   color: string,
 ) {
-  ctx.save();
+  // save()/restore() snapshot the entire canvas state (transform, clip, every
+  // style) just to toggle the dash pattern — with a scene full of vectors and
+  // shapes that's called once per object, every frame. Set + reset the one
+  // property we touch instead; it's the same visual result for far less work.
   ctx.setLineDash([5, 4]);
   drawArrow(ctx, from, to, color, 1.5);
-  ctx.restore();
+  ctx.setLineDash([]);
 }
 
 function polygonPath(ctx: CanvasRenderingContext2D, points: [number, number][]) {
@@ -73,13 +76,13 @@ function drawDashedPolygon(
   points: [number, number][],
   color: string,
 ) {
-  ctx.save();
+  // See drawDashedArrow above — explicit reset instead of save()/restore().
   ctx.setLineDash([5, 4]);
   ctx.strokeStyle = color;
   ctx.lineWidth = 1.5;
   polygonPath(ctx, points);
   ctx.stroke();
-  ctx.restore();
+  ctx.setLineDash([]);
 }
 
 function drawFilledPolygon(
@@ -87,7 +90,8 @@ function drawFilledPolygon(
   points: [number, number][],
   color: string,
 ) {
-  ctx.save();
+  // No save()/restore() needed here — globalAlpha is already reset to 1
+  // below, so nothing from this call leaks into the next draw.
   polygonPath(ctx, points);
   ctx.globalAlpha = 0.25;
   ctx.fillStyle = color;
@@ -96,7 +100,6 @@ function drawFilledPolygon(
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   ctx.stroke();
-  ctx.restore();
 }
 
 // Shoelace formula — works for any simple polygon, so it covers the
@@ -204,6 +207,9 @@ function drawScene(
   // polygon at transformed vertices. Drawn before vectors so a shape's fill
   // never washes out a vector arrow sitting on top of it.
   const shapeAreas: Record<string, number> = {};
+  // Same font for every shape's area label — set once rather than once per
+  // shape (this loop can run over dozens of shapes every animation frame).
+  ctx.font = '12px Inter, sans-serif';
   for (const shape of shapes) {
     const isDrawing = shape.id === drawingShapeId;
     if (shape.vertices.length === 0) continue;
@@ -246,13 +252,14 @@ function drawScene(
     centroid[0] /= transformedPoints.length;
     centroid[1] /= transformedPoints.length;
 
-    ctx.font = '12px Inter, sans-serif';
     ctx.fillStyle = shape.color;
     ctx.fillText(`Area: ${area.toFixed(2)}`, centroid[0] - 20, centroid[1]);
   }
 
   // Custom vectors — faint dashed ghost at original position, solid arrow at
   // transformed position. Drawn after shapes so arrows stay crisp on top.
+  // Same font for every vector's coordinate label — set once, not per vector.
+  ctx.font = '12px Inter, sans-serif';
   for (const v of customVectors) {
     const originalPoint: [number, number] = [cx + v.x * SCALE, cy - v.y * SCALE];
     drawDashedArrow(ctx, origin, originalPoint, 'rgba(255,255,255,0.25)');
@@ -260,7 +267,6 @@ function drawScene(
     const transformedPoint = tc(v.x, v.y);
     drawArrow(ctx, origin, transformedPoint, v.color, 2.2);
 
-    ctx.font = '12px Inter, sans-serif';
     ctx.fillStyle = v.color;
     const [tx, ty] = display.multiply([v.x, v.y]);
     ctx.fillText(
