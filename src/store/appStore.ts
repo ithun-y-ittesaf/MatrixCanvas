@@ -8,7 +8,37 @@ export interface CustomVector {
   color: string;
 }
 
+export type ShapeType = 'rectangle' | 'triangle' | 'polygon';
+
+export interface TransformableShape {
+  id: string;
+  type: ShapeType;
+  // Vertices in original, untransformed space.
+  vertices: [number, number][];
+  color: string;
+}
+
 const VECTOR_COLORS = ['#facc15', '#34d399', '#c084fc', '#fb923c', '#22d3ee', '#f472b6'];
+
+// Preset vertex sets, centered on the origin so transforms like scale and
+// rotation behave predictably. Used to offer one-click shape presets, the
+// same way PRESETS in utils/presets.ts offers matrix presets.
+export function rectanglePresetVertices(): [number, number][] {
+  return [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+  ];
+}
+
+export function trianglePresetVertices(): [number, number][] {
+  return [
+    [0, 1],
+    [-1, -1],
+    [1, -1],
+  ];
+}
 
 interface AppStore {
   matrixValues: Matrix2x2Values;
@@ -17,6 +47,7 @@ interface AppStore {
   // incremented each time "Animate" is clicked to re-trigger the tween
   animTrigger: number;
   customVectors: CustomVector[];
+  shapes: TransformableShape[];
 
   setMatrixValue: (row: 0 | 1, col: 0 | 1, value: number) => void;
   setMatrixValues: (values: Matrix2x2Values) => void;
@@ -25,6 +56,10 @@ interface AppStore {
   addVector: (x: number, y: number) => void;
   removeVector: (id: string) => void;
   updateVector: (id: string, x: number, y: number) => void;
+  addShape: (type: ShapeType, vertices: [number, number][]) => void;
+  removeShape: (id: string) => void;
+  addPolygonVertex: (shapeId: string, vertex: [number, number]) => void;
+  clearShapes: () => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -32,6 +67,7 @@ export const useAppStore = create<AppStore>((set) => ({
   animProgress: 1,
   animTrigger: 0,
   customVectors: [],
+  shapes: [],
 
   setMatrixValue: (row, col, value) =>
     set((state) => {
@@ -77,4 +113,33 @@ export const useAppStore = create<AppStore>((set) => ({
         v.id === id ? { ...v, x, y } : v
       ),
     })),
+
+  addShape: (type, vertices) =>
+    set((state) => ({
+      shapes: [
+        ...state.shapes,
+        {
+          id: crypto.randomUUID(),
+          type,
+          vertices,
+          // Offset from customVectors' cycling start so the first vector and
+          // the first shape don't land on the same color.
+          color: VECTOR_COLORS[(state.shapes.length + 3) % VECTOR_COLORS.length],
+        },
+      ],
+    })),
+
+  removeShape: (id) =>
+    set((state) => ({
+      shapes: state.shapes.filter((s) => s.id !== id),
+    })),
+
+  addPolygonVertex: (shapeId, vertex) =>
+    set((state) => ({
+      shapes: state.shapes.map((s) =>
+        s.id === shapeId ? { ...s, vertices: [...s.vertices, vertex] } : s
+      ),
+    })),
+
+  clearShapes: () => set({ shapes: [] }),
 }));
