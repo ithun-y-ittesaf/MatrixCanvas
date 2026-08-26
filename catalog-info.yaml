@@ -1,11 +1,10 @@
-apiVersion: backstage.io/v1alpha1
-kind: Component
 metadata:
   name: matrixcanvas
-  description: MatrixCanvas
+  description: Interactive matrix visualization tool
   annotations:
     github.com/project-slug: ithun-y-ittesaf/MatrixCanvas
-spec:
-  type: website
-  lifecycle: experimental
-  owner: user:default/guest
+  tags:
+    - typescript
+    - react
+    - vite
+    - education
