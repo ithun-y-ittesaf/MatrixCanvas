@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: matrixcanvas
+  description: MatrixCanvas
+  annotations:
+    github.com/project-slug: ithun-y-ittesaf/MatrixCanvas
+spec:
+  type: website
+  lifecycle: experimental
+  owner: user:default/guest
