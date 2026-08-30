@@ -91,3 +91,33 @@ describe('Matrix2x2.eigenvalues', () => {
     }
   });
 });
+
+describe('Matrix2x2.singularValues', () => {
+  it('matches the diagonal entries (sorted) for a diagonal scale matrix', () => {
+    const m = new Matrix2x2([[3, 0], [0, 5]]);
+    const [s1, s2] = m.singularValues();
+    expectClose(s1, 5);
+    expectClose(s2, 3);
+  });
+
+  it('is 1, 1 for a pure rotation (rotations preserve length in every direction)', () => {
+    const rotation = new Matrix2x2([[0, -1], [1, 0]]);
+    const [s1, s2] = rotation.singularValues();
+    expectClose(s1, 1);
+    expectClose(s2, 1);
+  });
+
+  it('has a zero second singular value for a rank-1 (singular) matrix', () => {
+    const m = new Matrix2x2([[1, 2], [2, 4]]);
+    const [s1, s2] = m.singularValues();
+    expectClose(s2, 0);
+    expectClose(s1 * s1, 1 + 4 + 4 + 16); // s1 == Frobenius norm when s2 == 0
+  });
+
+  it('has product equal to |det| and sum of squares equal to the squared Frobenius norm', () => {
+    const m = new Matrix2x2([[1, 2], [3, 4]]);
+    const [s1, s2] = m.singularValues();
+    expectClose(s1 * s2, Math.abs(m.determinant()));
+    expectClose(s1 * s1 + s2 * s2, 1 + 4 + 9 + 16);
+  });
+});

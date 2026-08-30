@@ -78,6 +78,21 @@ export class Matrix2x2 {
     return { type: 'complex', values: [{ re, im }, { re, im: -im }] };
   }
 
+  // Singular values, largest first. Derived from the eigenvalues of M^T*M in
+  // closed form: eig(M^T*M) = E ± F, where E = trace(M^T*M)/2 is half the
+  // squared Frobenius norm and F = sqrt(E^2 - det(M)^2) (since
+  // det(M^T*M) = det(M)^2). Singular values are the square roots of those.
+  // Exposed as a public method (rather than kept private to some future SVD
+  // class) so Tamim's SVD decomposition work can reuse this instead of
+  // re-deriving it.
+  singularValues(): [number, number] {
+    const { a, b, c, d } = this;
+    const E = (a * a + b * b + c * c + d * d) / 2;
+    const det = this.determinant();
+    const F = Math.sqrt(Math.max(E * E - det * det, 0));
+    return [Math.sqrt(Math.max(E + F, 0)), Math.sqrt(Math.max(E - F, 0))];
+  }
+
   inverse(): Matrix2x2 | null {
     const det = this.determinant();
     if (Math.abs(det) < 1e-9) return null;

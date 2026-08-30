@@ -5,6 +5,20 @@ function fmt(n: number): string {
   return parseFloat(n.toFixed(4)).toString();
 }
 
+// One-line plain-English read of what the singular values imply about the
+// transform, in the same spirit as the "Orientation reversed" note below.
+// Only surfaces when there's something notable to say - a near-uniform mix
+// of the two doesn't get a note.
+function singularValueNote([s1, s2]: [number, number]): string | null {
+  const eps = 1e-6;
+  if (s1 < eps) return 'Collapses everything to the origin';
+  if (s2 < eps) return 'Collapses space onto a line';
+  const ratio = s1 / s2;
+  if (ratio < 1 + 1e-3) return 'Scales shapes evenly in every direction';
+  if (ratio > 3) return 'Stretches shapes much more in one direction than the other';
+  return null;
+}
+
 function Dot({ ok }: { ok: boolean }) {
   return (
     <span className={`font-semibold ${ok ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -18,6 +32,8 @@ export default function PropertiesPanel() {
   const m = new Matrix2x2(matrixValues);
   const det = m.determinant();
   const eigenvals = m.eigenvalues();
+  const singularVals = m.singularValues();
+  const singularNote = singularValueNote(singularVals);
 
   return (
     <div
@@ -53,6 +69,13 @@ export default function PropertiesPanel() {
         </span>
       </div>
 
+      <div className="flex justify-between gap-6">
+        <span className="text-slate-400">singular values</span>
+        <span className="text-white">
+          {fmt(singularVals[0])}, {fmt(singularVals[1])}
+        </span>
+      </div>
+
       <div className="border-t border-white/5 mt-1 pt-1.5 flex flex-col gap-1.5">
         <div className="flex justify-between gap-6">
           <span className="text-slate-400">invertible</span>
@@ -68,10 +91,15 @@ export default function PropertiesPanel() {
         </div>
       </div>
 
-      {det < 0 && (
-        <p className="text-amber-500/80 text-[10px] font-sans mt-0.5 border-t border-white/5 pt-1.5">
-          Orientation reversed
-        </p>
+      {(det < 0 || singularNote) && (
+        <div className="border-t border-white/5 mt-0.5 pt-1.5 flex flex-col gap-1">
+          {det < 0 && (
+            <p className="text-amber-500/80 text-[10px] font-sans">Orientation reversed</p>
+          )}
+          {singularNote && (
+            <p className="text-amber-500/80 text-[10px] font-sans">{singularNote}</p>
+          )}
+        </div>
       )}
     </div>
   );
