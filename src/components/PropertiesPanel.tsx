@@ -1,8 +1,13 @@
 import { useAppStore } from '../store/appStore';
 import { Matrix2x2 } from '../math/Matrix2x2';
 
+// NFR-5 requires displayed numbers to be accurate to at least 6 decimal
+// places. toFixed(4) was truncating below that; round/display to 6 instead
+// (trailing zeros are still trimmed for readability).
+const DISPLAY_DECIMALS = 6;
+
 function fmt(n: number): string {
-  return parseFloat(n.toFixed(4)).toString();
+  return parseFloat(n.toFixed(DISPLAY_DECIMALS)).toString();
 }
 
 // One-line plain-English read of what the singular values imply about the
