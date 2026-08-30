@@ -66,3 +66,28 @@ describe('Matrix2x2.interpolateDecomposed', () => {
     expectClose(mid.d, Math.cos(expectedAngle));
   });
 });
+
+describe('Matrix2x2.eigenvalues', () => {
+  it('returns real eigenvalues when the discriminant is non-negative', () => {
+    const m = new Matrix2x2([[2, 0], [0, 3]]);
+    const result = m.eigenvalues();
+    expect(result.type).toBe('real');
+    if (result.type === 'real') {
+      expectClose(result.values[0], 3);
+      expectClose(result.values[1], 2);
+    }
+  });
+
+  it('returns a complex-conjugate pair instead of null when the discriminant is negative', () => {
+    // A 90° rotation: trace 0, det 1, discriminant -4 -> eigenvalues ±i.
+    const rotation90 = new Matrix2x2([[0, -1], [1, 0]]);
+    const result = rotation90.eigenvalues();
+    expect(result.type).toBe('complex');
+    if (result.type === 'complex') {
+      expectClose(result.values[0].re, 0);
+      expectClose(result.values[1].re, 0);
+      expectClose(result.values[0].im, 1);
+      expectClose(result.values[1].im, -1);
+    }
+  });
+});

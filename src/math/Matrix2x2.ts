@@ -1,5 +1,14 @@
 export type Matrix2x2Values = [[number, number], [number, number]];
 
+export interface Complex {
+  re: number;
+  im: number;
+}
+
+export type EigenvaluePair =
+  | { type: 'real'; values: [number, number] }
+  | { type: 'complex'; values: [Complex, Complex] };
+
 export class Matrix2x2 {
   readonly values: Matrix2x2Values;
 
@@ -53,14 +62,20 @@ export class Matrix2x2 {
     return Math.abs(this.b - this.c) < 1e-9;
   }
 
-  // Returns real eigenvalues or null if complex
-  eigenvalues(): [number, number] | null {
+  // Returns the matrix's eigenvalues. When the characteristic polynomial's
+  // discriminant is negative the roots are a complex-conjugate pair (a ± bi);
+  // those are returned as such rather than hidden behind a null.
+  eigenvalues(): EigenvaluePair {
     const tr = this.trace();
     const det = this.determinant();
     const disc = tr * tr - 4 * det;
-    if (disc < 0) return null;
-    const sq = Math.sqrt(disc);
-    return [(tr + sq) / 2, (tr - sq) / 2];
+    if (disc >= 0) {
+      const sq = Math.sqrt(disc);
+      return { type: 'real', values: [(tr + sq) / 2, (tr - sq) / 2] };
+    }
+    const re = tr / 2;
+    const im = Math.sqrt(-disc) / 2;
+    return { type: 'complex', values: [{ re, im }, { re, im: -im }] };
   }
 
   inverse(): Matrix2x2 | null {

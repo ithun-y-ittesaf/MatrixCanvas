@@ -47,9 +47,9 @@ export default function PropertiesPanel() {
       <div className="flex justify-between gap-6">
         <span className="text-slate-400">eigenvalues</span>
         <span className="text-white">
-          {eigenvals
-            ? `${fmt(eigenvals[0])}, ${fmt(eigenvals[1])}`
-            : <span className="text-slate-500 italic">ℂ</span>}
+          {eigenvals.type === 'real'
+            ? `${fmt(eigenvals.values[0])}, ${fmt(eigenvals.values[1])}`
+            : `${fmt(eigenvals.values[0].re)} ± ${fmt(Math.abs(eigenvals.values[0].im))}i`}
         </span>
       </div>
 
