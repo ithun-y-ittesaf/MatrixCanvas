@@ -25,6 +25,8 @@ export default function MatrixInput() {
   const [raw, setRaw] = useState<Raw>(() => fromStore(matrixValues));
   const [presetsOpen, setPresetsOpen] = useState(false);
   const presetsRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+  const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Sync raw display when a preset changes the store values
   const prevValRef = useRef(matrixValues);
@@ -46,6 +48,8 @@ export default function MatrixInput() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  useEffect(() => () => clearTimeout(copiedTimeoutRef.current), []);
+
   const handleChange = (r: 0 | 1, c: 0 | 1, val: string) => {
     setRaw((prev) => {
       const next: Raw = [[...prev[0]], [...prev[1]]];
@@ -60,6 +64,27 @@ export default function MatrixInput() {
     setMatrixValues(values);
     setRaw(fromStore(values));
     setPresetsOpen(false);
+  };
+
+  const handleCopyLink = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for browsers without Clipboard API access (e.g. non-secure
+      // context) — a hidden textarea + the legacy copy command.
+      const el = document.createElement('textarea');
+      el.value = url;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+    setCopied(true);
+    clearTimeout(copiedTimeoutRef.current);
+    copiedTimeoutRef.current = setTimeout(() => setCopied(false), 1600);
   };
 
   return (
@@ -142,35 +167,47 @@ export default function MatrixInput() {
         />
       </div>
 
-      {/* Presets dropdown */}
-      <div ref={presetsRef} className="relative w-full">
-        <button
-          onClick={() => setPresetsOpen((o) => !o)}
-          className="w-full px-4 py-1.5 rounded-lg border border-white/10 text-slate-400
-                     hover:text-white hover:border-white/20 text-xs transition-colors text-center"
-        >
-          Presets ▾
-        </button>
+      {/* Presets dropdown + Copy Link */}
+      <div className="w-full flex items-center gap-2">
+        <div ref={presetsRef} className="relative flex-1">
+          <button
+            onClick={() => setPresetsOpen((o) => !o)}
+            className="w-full px-4 py-1.5 rounded-lg border border-white/10 text-slate-400
+                       hover:text-white hover:border-white/20 text-xs transition-colors text-center"
+          >
+            Presets ▾
+          </button>
 
-        <div
-          className={`absolute bottom-full mb-1 left-0 right-0 rounded-lg
-                      bg-[#1a1d2e] border border-white/10 overflow-hidden z-10 shadow-xl
-                      transition-all duration-150 ease-out origin-bottom
-                      ${presetsOpen
-                        ? 'opacity-100 translate-y-0 pointer-events-auto'
-                        : 'opacity-0 translate-y-1 pointer-events-none'}`}
-        >
-          {PRESETS.map((p) => (
-            <button
-              key={p.label}
-              onClick={() => applyPreset(p.values)}
-              className="block w-full text-left px-3 py-2 text-sm text-slate-300
-                         hover:bg-white/5 hover:text-white transition-colors"
-            >
-              {p.label}
-            </button>
-          ))}
+          <div
+            className={`absolute bottom-full mb-1 left-0 right-0 rounded-lg
+                        bg-[#1a1d2e] border border-white/10 overflow-hidden z-10 shadow-xl
+                        transition-all duration-150 ease-out origin-bottom
+                        ${presetsOpen
+                          ? 'opacity-100 translate-y-0 pointer-events-auto'
+                          : 'opacity-0 translate-y-1 pointer-events-none'}`}
+          >
+            {PRESETS.map((p) => (
+              <button
+                key={p.label}
+                onClick={() => applyPreset(p.values)}
+                className="block w-full text-left px-3 py-2 text-sm text-slate-300
+                           hover:bg-white/5 hover:text-white transition-colors"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <button
+          onClick={handleCopyLink}
+          className={`flex-1 px-4 py-1.5 rounded-lg border text-xs transition-colors text-center
+                      ${copied
+                        ? 'border-emerald-400/40 text-emerald-400'
+                        : 'border-white/10 text-slate-400 hover:text-white hover:border-white/20'}`}
+        >
+          {copied ? 'Copied!' : 'Copy Link'}
+        </button>
       </div>
     </div>
   );
