@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Matrix2x2Values } from '../math/Matrix2x2';
+import type { Lesson, LessonStep } from '../lessons/types';
 
 export interface CustomVector {
   id: string;
@@ -64,15 +65,29 @@ interface AppStore {
   removeShape: (id: string) => void;
   addPolygonVertex: (shapeId: string, vertex: [number, number]) => void;
   clearShapes: () => void;
+  clearVectors: () => void;
+
+  // Lesson engine slice. The active lesson/step live here rather than on a
+  // Lesson class instance (per the proposal's class diagram) so the rest of
+  // the app can just subscribe to the store like it does for everything
+  // else; applyLessonStep below is the applyStep(n) from that diagram.
+  activeLesson: Lesson | null;
+  activeStepIndex: number;
+  startLesson: (lesson: Lesson) => void;
+  nextStep: () => void;
+  prevStep: () => void;
+  exitLesson: () => void;
 }
 
-export const useAppStore = create<AppStore>((set) => ({
+export const useAppStore = create<AppStore>((set, get) => ({
   matrixValues: [[1, 0], [0, 1]],
   animProgress: 1,
   animTrigger: 0,
   isScrubbing: false,
   customVectors: [],
   shapes: [],
+  activeLesson: null,
+  activeStepIndex: 0,
 
   setMatrixValue: (row, col, value) =>
     set((state) => {
@@ -152,4 +167,53 @@ export const useAppStore = create<AppStore>((set) => ({
     })),
 
   clearShapes: () => set({ shapes: [] }),
+  clearVectors: () => set({ customVectors: [] }),
+
+  startLesson: (lesson) => {
+    set({ activeLesson: lesson, activeStepIndex: 0 });
+    const firstStep = lesson.steps[0];
+    if (firstStep) applyLessonStep(get(), firstStep);
+  },
+
+  nextStep: () => {
+    const { activeLesson, activeStepIndex } = get();
+    if (!activeLesson) return;
+    const nextIndex = activeStepIndex + 1;
+    const step = activeLesson.steps[nextIndex];
+    if (!step) return; // already on the last step
+    set({ activeStepIndex: nextIndex });
+    applyLessonStep(get(), step);
+  },
+
+  prevStep: () => {
+    const { activeLesson, activeStepIndex } = get();
+    if (!activeLesson) return;
+    const prevIndex = activeStepIndex - 1;
+    const step = activeLesson.steps[prevIndex];
+    if (!step) return; // already on the first step
+    set({ activeStepIndex: prevIndex });
+    applyLessonStep(get(), step);
+  },
+
+  exitLesson: () => set({ activeLesson: null, activeStepIndex: 0 }),
 }));
+
+// Pushes a lesson step's matrix/vectors/shapes into the shared playground
+// state via the store's own public setters (setMatrixValues/addVector/
+// addShape) — same pattern urlState.ts's hydrateStoreFromSearchParams uses
+// to drive the canvas from an external source. This is what satisfies FR-7
+// ("programmatically control the canvas state"): TransformCanvas and the
+// rest of the Playground UI just read matrixValues/customVectors/shapes as
+// usual and have no idea a lesson is driving them.
+//
+// Vectors/shapes are fully replaced (not merged) on every step, so a step
+// that omits `vectors`/`shapes` clears whatever the previous step loaded.
+function applyLessonStep(store: AppStore, step: LessonStep): void {
+  store.setMatrixValues(step.matrix);
+
+  store.clearVectors();
+  for (const v of step.vectors ?? []) store.addVector(v.x, v.y);
+
+  store.clearShapes();
+  for (const s of step.shapes ?? []) store.addShape(s.type, s.vertices);
+}
