@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import LessonRunner from '../components/LessonRunner';
 import MatrixInput from '../components/MatrixInput';
 import PropertiesPanel from '../components/PropertiesPanel';
 import ShapePanel from '../components/ShapePanel';
@@ -54,6 +55,10 @@ export default function PlaygroundPage() {
     <div className="relative h-[calc(100vh-3.5rem)]">
       {/* Full-bleed canvas */}
       <TransformCanvas drawingShapeId={drawingShapeId} />
+
+      {/* Lesson runner — top-center, overlays the canvas without touching it.
+          Renders nothing unless a lesson was started (e.g. from LearningPage). */}
+      <LessonRunner />
 
       {/* Floating matrix panel — bottom-left */}
       <div className="absolute bottom-6 left-6 rounded-xl border border-white/10 px-5 py-4
