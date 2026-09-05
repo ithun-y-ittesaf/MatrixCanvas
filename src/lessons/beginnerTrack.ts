@@ -208,9 +208,105 @@ const scalingLesson: Lesson = {
   ],
 };
 
+const rotationLesson: Lesson = {
+  id: 'beginner-rotation',
+  track: 'beginner',
+  title: 'Rotation',
+  steps: [
+    {
+      id: 'recall-identity-rotation',
+      title: 'Starting point: identity',
+      explanation:
+        'The identity matrix leaves every vector pointing the same way it started. Rotation ' +
+        'instead turns every vector by the same fixed angle around the origin, without ' +
+        'changing its length.',
+      matrix: IDENTITY,
+      vectors: [{ x: 1, y: 0 }],
+    },
+    {
+      id: 'rotate-90',
+      title: 'Rotating 90°',
+      explanation:
+        'This matrix rotates every vector 90° counter-clockwise. Watch the vector (1, 0), ' +
+        'pointing right, swing up to (0, 1). A general rotation matrix by angle θ has cos θ ' +
+        'and -sin θ across its top row, sin θ and cos θ across its bottom row — plug in ' +
+        'θ = 90° (cos 90° = 0, sin 90° = 1) and you get exactly this matrix.',
+      matrix: presetValues('Rotate 90°'),
+      vectors: [{ x: 1, y: 0 }],
+      katex:
+        'R_\\theta=\\begin{bmatrix}\\cos\\theta & -\\sin\\theta \\\\ ' +
+        '\\sin\\theta & \\cos\\theta\\end{bmatrix}',
+    },
+    {
+      id: 'rotate-45',
+      title: 'Rotating 45°',
+      explanation:
+        'This time the matrix rotates by 45° instead of 90° — half a right angle. Since ' +
+        'cos 45° = sin 45° ≈ 0.7071, the vector (1, 0) lands exactly halfway between its ' +
+        'starting position and where the 90° rotation sent it.',
+      matrix: presetValues('Rotate 45°'),
+      vectors: [{ x: 1, y: 0 }],
+      katex: '\\begin{bmatrix}0.7071 & -0.7071 \\\\ 0.7071 & 0.7071\\end{bmatrix}',
+    },
+    {
+      id: 'rotation-preserves-shape',
+      title: 'Rotation preserves size and shape',
+      explanation:
+        "Unlike scaling, rotation never stretches or squashes anything — it's a rigid " +
+        'motion. Watch the rectangle turn 90° without changing its side lengths or its area, ' +
+        'just its orientation.',
+      matrix: presetValues('Rotate 90°'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+    },
+  ],
+};
+
+const shearLesson: Lesson = {
+  id: 'beginner-shear',
+  track: 'beginner',
+  title: 'Shear',
+  steps: [
+    {
+      id: 'recall-identity-shear',
+      title: 'Starting point: identity',
+      explanation:
+        'Starting again from a plain rectangle under the identity matrix, unchanged. A shear ' +
+        'slides one axis sideways in proportion to the other, turning this same rectangle ' +
+        'into a parallelogram.',
+      matrix: IDENTITY,
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+    },
+    {
+      id: 'horizontal-shear',
+      title: 'Horizontal shear',
+      explanation:
+        "This matrix leaves e1 = (1, 0) exactly where it is, but sends e2 = (0, 1) to " +
+        "(1, 1) — every point's x-coordinate shifts right by an amount equal to its " +
+        "y-coordinate, while y itself doesn't move. That's why the rectangle slants sideways " +
+        'into a parallelogram, more so the higher up you go.',
+      matrix: presetValues('Horizontal Shear'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+      katex: '\\begin{bmatrix}1 & 1 \\\\ 0 & 1\\end{bmatrix}',
+    },
+    {
+      id: 'vertical-shear',
+      title: 'Vertical shear',
+      explanation:
+        "The mirror-image idea: this matrix shifts each point's y-coordinate up by an " +
+        'amount equal to its x-coordinate, while x stays put. The same rectangle now slants ' +
+        'upward instead of sideways.',
+      matrix: presetValues('Vertical Shear'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+      katex: '\\begin{bmatrix}1 & 0 \\\\ 1 & 1\\end{bmatrix}',
+    },
+  ],
+};
+
 export const BEGINNER_TRACK: Lesson[] = [
   vectorsLesson,
   matrixMultiplicationLesson,
   identityLesson,
   scalingLesson,
+  rotationLesson,
+  shearLesson,
 ];
