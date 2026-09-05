@@ -108,7 +108,109 @@ const matrixMultiplicationLesson: Lesson = {
   ],
 };
 
+const identityLesson: Lesson = {
+  id: 'beginner-identity',
+  track: 'beginner',
+  title: 'Identity',
+  steps: [
+    {
+      id: 'the-identity-matrix',
+      title: 'The identity matrix',
+      explanation:
+        "You already met this in the last lesson: the identity matrix leaves every vector " +
+        "exactly where it is. It's the \"do nothing\" transformation — the baseline every " +
+        'other matrix in this track gets compared against.',
+      matrix: IDENTITY,
+      vectors: [{ x: 1, y: 1 }],
+      katex: '\\begin{bmatrix}1 & 0 \\\\ 0 & 1\\end{bmatrix}',
+    },
+    {
+      id: 'columns-are-basis-images',
+      title: 'Its columns are where e1 and e2 land',
+      explanation:
+        "Here's a fact that generalizes to every matrix: its first column is where it sends " +
+        'e1 = (1, 0), and its second column is where it sends e2 = (0, 1). For the identity ' +
+        'matrix, e1 stays at (1, 0) and e2 stays at (0, 1) — nothing moves, which is exactly ' +
+        'why its columns are (1, 0) and (0, 1).',
+      matrix: IDENTITY,
+      vectors: [{ x: 1, y: 0 }, { x: 0, y: 1 }],
+      katex:
+        'e_1=\\begin{bmatrix}1 \\\\ 0\\end{bmatrix}\\rightarrow\\begin{bmatrix}1 \\\\ 0\\end{bmatrix},' +
+        '\\quad e_2=\\begin{bmatrix}0 \\\\ 1\\end{bmatrix}\\rightarrow\\begin{bmatrix}0 \\\\ 1\\end{bmatrix}',
+    },
+    {
+      id: 'shapes-unchanged-too',
+      title: 'Shapes pass through unchanged too',
+      explanation:
+        'Because every point of a shape gets the same treatment, a rectangle under the ' +
+        'identity matrix comes out exactly as it went in. Every lesson from here on shows you ' +
+        'a matrix that actually does something to this same rectangle — starting with scaling, ' +
+        'next.',
+      matrix: IDENTITY,
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+    },
+  ],
+};
+
+const scalingLesson: Lesson = {
+  id: 'beginner-scaling',
+  track: 'beginner',
+  title: 'Scaling',
+  steps: [
+    {
+      id: 'recall-identity-scaling',
+      title: 'Starting point: identity',
+      explanation:
+        'Recall that the identity matrix leaves vectors unchanged. Scaling is the first ' +
+        'matrix in this track that actually changes something: it stretches or shrinks ' +
+        'vectors along the axes. The next three steps build that up from simplest to most ' +
+        'general.',
+      matrix: IDENTITY,
+      vectors: [{ x: 1, y: 1 }],
+    },
+    {
+      id: 'uniform-scaling',
+      title: 'Uniform scaling',
+      explanation:
+        'This matrix has 2 on both diagonal entries and 0 elsewhere. Multiplying it by any ' +
+        'vector doubles both components — every vector ends up twice as long, in the same ' +
+        'direction. Because both axes scale by the same factor, this is called uniform ' +
+        'scaling.',
+      matrix: presetValues('Scale ×2'),
+      vectors: [{ x: 1, y: 1 }],
+      katex:
+        '\\begin{bmatrix}2 & 0 \\\\ 0 & 2\\end{bmatrix}\\begin{bmatrix}1 \\\\ 1\\end{bmatrix}' +
+        '=\\begin{bmatrix}2 \\\\ 2\\end{bmatrix}',
+    },
+    {
+      id: 'non-uniform-scaling',
+      title: 'Non-uniform scaling',
+      explanation:
+        'Nothing says the two diagonal entries have to match. This matrix stretches the ' +
+        'x-axis by a factor of 2 and shrinks the y-axis to half size — watch the rectangle ' +
+        'get wider and flatter instead of simply growing.',
+      matrix: [[2, 0], [0, 0.5]],
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+      katex: '\\begin{bmatrix}2 & 0 \\\\ 0 & 0.5\\end{bmatrix}',
+    },
+    {
+      id: 'negative-scale-is-a-flip',
+      title: 'A negative scale factor flips the axis',
+      explanation:
+        "What happens if a diagonal entry is negative? This matrix scales x by 1 " +
+        "(unchanged) and y by -1 — every point flips to the opposite side of the x-axis. " +
+        "Scaling by a negative number isn't really shrinking, it's a mirror image — you'll " +
+        'meet this idea again, properly, in the Reflection lesson.',
+      matrix: presetValues('Reflect over X'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+      katex: '\\begin{bmatrix}1 & 0 \\\\ 0 & -1\\end{bmatrix}',
+    },
+  ],
+};
+
 export const BEGINNER_TRACK: Lesson[] = [
   vectorsLesson,
   matrixMultiplicationLesson,
+  identityLesson,
+  scalingLesson,
 ];
