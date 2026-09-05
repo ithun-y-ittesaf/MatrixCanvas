@@ -113,7 +113,105 @@ const determinantLesson: Lesson = {
   ],
 };
 
+const nullSpaceLesson: Lesson = {
+  id: 'intermediate-null-space',
+  track: 'intermediate',
+  title: 'Null Space',
+  steps: [
+    {
+      id: 'recall-determinant-zero',
+      title: 'When det = 0, something vanishes',
+      explanation:
+        'Recall the projection matrix from the Determinant lesson had det = 0 (check the ' +
+        'Properties panel). When det = 0, some nonzero vector gets squashed all the way ' +
+        'to the origin. Watch (0, 1) here: projecting onto the x-axis sends it straight ' +
+        'down to (0, 0).',
+      matrix: presetValues('Project onto X'),
+      vectors: [{ x: 0, y: 1 }],
+    },
+    {
+      id: 'null-space-defined',
+      title: 'The null space is every vector that vanishes',
+      explanation:
+        'The null space of a matrix is the set of every vector it sends to the origin. ' +
+        "For this projection matrix, that's the entire y-axis — every vector plotted " +
+        'here has x = 0, and every one of them collapses to (0, 0). Only the x-component ' +
+        'of a vector survives this transform; any vector with none to begin with vanishes ' +
+        'completely.',
+      matrix: presetValues('Project onto X'),
+      vectors: [{ x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: -1.5 }],
+      katex: 'N(A)=\\{v : Av=0\\}',
+    },
+    {
+      id: 'invertible-has-trivial-null-space',
+      title: 'Invertible matrices have no null space to speak of',
+      explanation:
+        'Compare that to an invertible matrix like this identity matrix — check the ' +
+        'Properties panel: det is nonzero and invertible reads yes. Its null space ' +
+        "contains only the zero vector itself: no nonzero vector gets squashed to the " +
+        'origin, which is exactly why the transform can be undone.',
+      matrix: IDENTITY,
+      vectors: [{ x: 1, y: 1 }],
+    },
+    {
+      id: 'the-flip-side-is-column-space',
+      title: "The flip side: where everything lands",
+      explanation:
+        "Null space asks what gets sent to zero. There's a flip side: what's the actual " +
+        'range of outputs? Watch the rectangle collapse onto a flat line segment along ' +
+        "the x-axis under this same matrix — that line is exactly what the next lesson, " +
+        'Column Space, is about.',
+      matrix: presetValues('Project onto X'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+    },
+  ],
+};
+
+const columnSpaceLesson: Lesson = {
+  id: 'intermediate-column-space',
+  track: 'intermediate',
+  title: 'Column Space',
+  steps: [
+    {
+      id: 'recall-columns-are-basis-images',
+      title: 'Columns are where e1 and e2 land',
+      explanation:
+        "Recall from the Identity lesson that a matrix's columns are where it sends e1 " +
+        'and e2. The column space is the set of every point those two columns (and every ' +
+        "combination of them) can reach — everywhere the transform's output can land. " +
+        'Check the Properties panel: rank reads 2 here, meaning outputs can land anywhere ' +
+        'in the plane.',
+      matrix: IDENTITY,
+      vectors: [{ x: 1, y: 0 }, { x: 0, y: 1 }],
+    },
+    {
+      id: 'full-rank-fills-the-plane',
+      title: 'Full rank means the whole plane is reachable',
+      explanation:
+        'Any invertible matrix, like this one, has rank 2 — check the Properties panel. ' +
+        'Its column space is the entire plane: every point is reachable as the image of ' +
+        'some input vector.',
+      matrix: presetValues('Scale ×2'),
+      vectors: [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }],
+    },
+    {
+      id: 'rank-one-column-space-is-a-line',
+      title: 'Rank 1 means the outputs are trapped on a line',
+      explanation:
+        'Now check the Properties panel for this projection matrix: rank reads 1. Its ' +
+        'column space collapses to a single line — the x-axis — no matter what vector ' +
+        'you feed in, the output always lands somewhere on it. This is the companion ' +
+        "fact to Null Space: a whole line's worth of inputs collapses to zero, and " +
+        'correspondingly, every output is trapped on a line too.',
+      matrix: presetValues('Project onto X'),
+      vectors: [{ x: 1, y: 1 }, { x: 2, y: -1 }, { x: -1, y: 2 }],
+    },
+  ],
+};
+
 export const INTERMEDIATE_TRACK: Lesson[] = [
   matrixCompositionLesson,
   determinantLesson,
+  nullSpaceLesson,
+  columnSpaceLesson,
 ];
