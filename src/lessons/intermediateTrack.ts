@@ -209,9 +209,119 @@ const columnSpaceLesson: Lesson = {
   ],
 };
 
+const invertibilityLesson: Lesson = {
+  id: 'intermediate-invertibility',
+  track: 'intermediate',
+  title: 'Invertibility',
+  steps: [
+    {
+      id: 'recall-determinant-nonzero',
+      title: 'Invertible means det ≠ 0',
+      explanation:
+        'A matrix is invertible exactly when its determinant is nonzero. Check the ' +
+        'Properties panel: for this matrix, det is nonzero and invertible reads yes. An ' +
+        'invertible matrix can always be undone — there\'s another matrix, its inverse, ' +
+        'that reverses the transform exactly.',
+      matrix: presetValues('Scale ×2'),
+      vectors: [{ x: 1, y: 1 }],
+    },
+    {
+      id: 'the-inverse-matrix',
+      title: 'The inverse undoes the transform',
+      explanation:
+        'The inverse of the scale-by-2 matrix from the last step is scale-by-0.5 — it ' +
+        'exactly undoes the doubling. This matrix is loaded on (2, 2), where (1, 1) ' +
+        'landed after scaling, and it returns to (1, 1). In general, a matrix\'s inverse ' +
+        'can be written directly from its four entries, no bigger than the matrix itself.',
+      matrix: [[0.5, 0], [0, 0.5]],
+      vectors: [{ x: 2, y: 2 }],
+      katex: 'A^{-1}=\\frac{1}{\\det A}\\begin{bmatrix}d & -b \\\\ -c & a\\end{bmatrix}',
+    },
+    {
+      id: 'no-inverse-when-det-zero',
+      title: 'No inverse when det = 0',
+      explanation:
+        'This projection matrix has det = 0 — check the Properties panel: invertible now ' +
+        "reads no. That makes sense: it already collapsed the y-axis to the origin (the " +
+        'Null Space lesson), so there\'s no way to reverse-engineer which original ' +
+        "y-value a squashed point came from. Lost information can't be recovered by any " +
+        'matrix.',
+      matrix: presetValues('Project onto X'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+    },
+    {
+      id: 'putting-it-together',
+      title: 'Several ways to say the same thing',
+      explanation:
+        "Invertible, det ≠ 0, and rank 2 are all exactly the same condition on a matrix — " +
+        "check any one of them in the Properties panel and you've checked them all. This " +
+        'is one of the most useful facts in linear algebra: several seemingly different ' +
+        'questions boil down to a single yes/no answer.',
+      matrix: presetValues('Rotate 90°'),
+      vectors: [{ x: 1, y: 0 }],
+    },
+  ],
+};
+
+const eigenvectorsLesson: Lesson = {
+  id: 'intermediate-eigenvectors',
+  track: 'intermediate',
+  title: 'Eigenvectors',
+  steps: [
+    {
+      id: 'what-is-an-eigenvector',
+      title: 'A vector that only gets longer, not turned',
+      explanation:
+        'Recall the non-uniform scaling matrix, diag(2, 0.5), from the Beginner track\'s ' +
+        'Scaling lesson. Watch the vector (1, 0): it stretches to (2, 0) — same direction, ' +
+        'just longer. A vector like this, whose direction a matrix leaves unchanged (only ' +
+        'its length rescales), is called an eigenvector.',
+      matrix: [[2, 0], [0, 0.5]],
+      vectors: [{ x: 1, y: 0 }],
+      katex: 'Av=\\lambda v',
+    },
+    {
+      id: 'the-eigenvalue',
+      title: 'The eigenvalue is the scale factor',
+      explanation:
+        '(0, 1) is an eigenvector too, but with a different scale factor: it shrinks to ' +
+        '(0, 0.5) instead of stretching. That scale factor — 2 for the last vector, 0.5 ' +
+        'for this one — is called the eigenvalue. Check the Properties panel: eigenvalues ' +
+        'reads 2, 0.5, exactly the two numbers you just watched play out.',
+      matrix: [[2, 0], [0, 0.5]],
+      vectors: [{ x: 0, y: 1 }],
+    },
+    {
+      id: 'not-every-vector-is-an-eigenvector',
+      title: "Most vectors aren't eigenvectors",
+      explanation:
+        "Watch (1, 1) under this same matrix: it becomes (2, 0.5) — a completely " +
+        'different direction, not just a rescaled version of (1, 1). Only vectors that ' +
+        "already point along one of a matrix's special axis directions keep their " +
+        'direction; everything else gets turned as well as stretched.',
+      matrix: [[2, 0], [0, 0.5]],
+      vectors: [{ x: 1, y: 1 }],
+    },
+    {
+      id: 'complex-eigenvalues',
+      title: 'Rotation has no real eigenvectors',
+      explanation:
+        'Rotation is the opposite extreme: no real vector keeps its direction under a 90° ' +
+        'turn — every single one changes direction. Check the Properties panel: ' +
+        'eigenvalues shows a ± pair with an i in it instead of two plain numbers. A ' +
+        "matrix's eigenvalues aren't always real, and for a pure rotation other than 0° " +
+        'or 180°, they never are.',
+      matrix: presetValues('Rotate 90°'),
+      vectors: [{ x: 1, y: 0 }],
+    },
+  ],
+};
+
 export const INTERMEDIATE_TRACK: Lesson[] = [
   matrixCompositionLesson,
   determinantLesson,
   nullSpaceLesson,
   columnSpaceLesson,
+  invertibilityLesson,
+  eigenvectorsLesson,
 ];
