@@ -1,23 +1,11 @@
 import type { Lesson } from './types';
-import type { Matrix2x2Values } from '../math/Matrix2x2';
-import { PRESETS } from '../utils/presets';
 import { rectanglePresetVertices } from '../store/appStore';
+import { presetValues, IDENTITY } from './presetValues';
 
 // Beginner track content per the proposal's Feature 4 spec: Vectors, Matrix
 // Multiplication, Identity, Scaling, Rotation, Shear, Reflection. Written for
 // a second-semester undergraduate audience — basic calculus is assumed, but
 // no prior geometric intuition for matrices.
-
-// Looks a transform up by its MatrixInput dropdown label, so lessons that use
-// a "named" preset (rotation/shear/reflection/scale) stay in sync with
-// PRESETS instead of re-typing the same numbers.
-function presetValues(label: string): Matrix2x2Values {
-  const preset = PRESETS.find((p) => p.label === label);
-  if (!preset) throw new Error(`beginnerTrack: no preset labeled "${label}"`);
-  return preset.values;
-}
-
-const IDENTITY = presetValues('Identity');
 
 const vectorsLesson: Lesson = {
   id: 'beginner-vectors',
