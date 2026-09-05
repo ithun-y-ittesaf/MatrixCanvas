@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
-import { TEST_LESSONS } from '../lessons/testLessons';
+import { ALL_LESSONS } from '../lessons';
 import type { Lesson, TrackType } from '../lessons/types';
 
 const TRACKS: TrackType[] = ['beginner', 'intermediate', 'decompositions'];
@@ -31,7 +31,7 @@ export default function LearningPage() {
 
         <div className="flex flex-col gap-6">
           {TRACKS.map((track) => {
-            const lessons = TEST_LESSONS.filter((l) => l.track === track);
+            const lessons = ALL_LESSONS.filter((l) => l.track === track);
             return (
               <div key={track}>
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">
