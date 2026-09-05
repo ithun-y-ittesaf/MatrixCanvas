@@ -302,6 +302,50 @@ const shearLesson: Lesson = {
   ],
 };
 
+const reflectionLesson: Lesson = {
+  id: 'beginner-reflection',
+  track: 'beginner',
+  title: 'Reflection',
+  steps: [
+    {
+      id: 'recall-identity-reflection',
+      title: 'Starting point: identity',
+      explanation:
+        "One more time from the identity matrix: the vector (2, 1) sits exactly where it's " +
+        'plotted, unchanged. A reflection instead sends it to its mirror image across some ' +
+        'line through the origin.',
+      matrix: IDENTITY,
+      vectors: [{ x: 2, y: 1 }],
+    },
+    {
+      id: 'reflect-over-x-axis',
+      title: 'Reflecting over the x-axis',
+      explanation:
+        'This matrix keeps x the same and flips the sign of y. Every point ends up as its ' +
+        'mirror image across the x-axis — watch (2, 1) land at (2, -1), the same distance ' +
+        'below the axis that it started above it.',
+      matrix: presetValues('Reflect over X'),
+      vectors: [{ x: 2, y: 1 }],
+      katex:
+        '\\begin{bmatrix}1 & 0 \\\\ 0 & -1\\end{bmatrix}\\begin{bmatrix}2 \\\\ 1\\end{bmatrix}' +
+        '=\\begin{bmatrix}2 \\\\ -1\\end{bmatrix}',
+    },
+    {
+      id: 'reflect-over-y-equals-x',
+      title: 'Reflecting over the line y = x',
+      explanation:
+        "This matrix swaps the two coordinates outright: (x, y) becomes (y, x). " +
+        "Geometrically, that's a mirror image across the diagonal line y = x — watch " +
+        '(2, 1) land at (1, 2).',
+      matrix: presetValues('Reflect over Y=X'),
+      vectors: [{ x: 2, y: 1 }],
+      katex:
+        '\\begin{bmatrix}0 & 1 \\\\ 1 & 0\\end{bmatrix}\\begin{bmatrix}2 \\\\ 1\\end{bmatrix}' +
+        '=\\begin{bmatrix}1 \\\\ 2\\end{bmatrix}',
+    },
+  ],
+};
+
 export const BEGINNER_TRACK: Lesson[] = [
   vectorsLesson,
   matrixMultiplicationLesson,
@@ -309,4 +353,5 @@ export const BEGINNER_TRACK: Lesson[] = [
   scalingLesson,
   rotationLesson,
   shearLesson,
+  reflectionLesson,
 ];
