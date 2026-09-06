@@ -40,10 +40,9 @@ export default function LessonRunner() {
 
   return (
     <div
-      className="absolute top-6 left-1/2 -translate-x-1/2 rounded-xl border border-white/10
-                 px-5 py-4 bg-black/50 backdrop-blur-md shadow-2xl flex flex-col gap-3
-                 font-sans"
-      style={{ width: 400 }}
+      className="absolute top-6 left-1/2 -translate-x-1/2 w-[92vw] max-w-[400px] rounded-xl
+                 border border-white/10 px-5 py-4 bg-black/50 backdrop-blur-md shadow-2xl
+                 flex flex-col gap-3 font-sans"
     >
       <div className="flex items-center justify-between gap-3">
         <p className="text-slate-500 uppercase tracking-widest text-[10px]">
@@ -76,7 +75,7 @@ export default function LessonRunner() {
           ← Prev
         </button>
 
-        <span className="text-slate-500 text-xs">
+        <span className="text-slate-500 text-xs shrink-0 whitespace-nowrap">
           Step {stepNumber} of {totalSteps}
         </span>
 
