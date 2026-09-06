@@ -195,7 +195,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
     applyLessonStep(get(), step);
   },
 
-  exitLesson: () => set({ activeLesson: null, activeStepIndex: 0 }),
+  // Exiting drops the lesson slice *and* resets the canvas back to a blank
+  // playground (identity matrix, no vectors/shapes) rather than leaving
+  // whatever the last active step had loaded — otherwise free-play mode
+  // would start out contaminated with leftover lesson state.
+  exitLesson: () =>
+    set({
+      activeLesson: null,
+      activeStepIndex: 0,
+      matrixValues: [[1, 0], [0, 1]],
+      customVectors: [],
+      shapes: [],
+    }),
 }));
 
 // Pushes a lesson step's matrix/vectors/shapes into the shared playground

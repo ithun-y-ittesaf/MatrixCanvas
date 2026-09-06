@@ -69,14 +69,19 @@ describe('lesson engine plumbing', () => {
     expect(useAppStore.getState().activeStepIndex).toBe(0);
   });
 
-  it('exitLesson clears the lesson slice but leaves the canvas as last applied', () => {
+  it('exitLesson clears the lesson slice and resets the canvas to blank', () => {
     useAppStore.getState().startLesson(TEST_LESSON_IDENTITY_SCALE);
+    useAppStore.getState().nextStep(); // now sitting on the non-identity Scale-by-2 step
     useAppStore.getState().exitLesson();
     const state = useAppStore.getState();
 
     expect(state.activeLesson).toBeNull();
     expect(state.activeStepIndex).toBe(0);
+    // Free-play mode shouldn't start out contaminated with whatever the
+    // lesson's last active step had loaded.
     expect(state.matrixValues).toEqual([[1, 0], [0, 1]]);
+    expect(state.customVectors).toEqual([]);
+    expect(state.shapes).toEqual([]);
   });
 
   it('applies shapes for a shape-driving lesson, replacing shapes between steps', () => {
