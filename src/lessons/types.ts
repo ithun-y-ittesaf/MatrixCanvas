@@ -39,9 +39,8 @@ export interface LessonStep {
   vectors?: LessonVector[];
   shapes?: LessonShape[];
   // Raw KaTeX source (no surrounding $ / $$ delimiters), e.g.
-  // "\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}". Rendering is left to
-  // whatever lesson UI eventually consumes steps — katex is already a
-  // project dependency but nothing renders it yet.
+  // "\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}". Rendered by
+  // LessonRunner via katex.render() into a container div.
   katex?: string;
 }
 
