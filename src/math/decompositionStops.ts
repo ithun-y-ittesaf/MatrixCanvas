@@ -4,9 +4,11 @@
 // a plainer tween) to visualise a transform as a composition of simpler steps.
 //
 // This is Feature 3's data layer: pure math, no rendering. Every sequence
-// starts at the identity and ends at A itself; the stops in between are what
-// each decomposition contributes, in application order (each new factor is
-// "applied on top", i.e. left-multiplied onto the running product).
+// starts at the identity and ends at A itself; the stops in between are the
+// partial results each decomposition builds up on the way there (for SVD and
+// eigen, each factor left-multiplied "on top" of the running product; for LU
+// and QR, the elimination / orthonormalisation state after each step). See
+// each function for its exact sequence.
 
 import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
 import {
