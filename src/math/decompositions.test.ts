@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
-import { svd, luDecompose, qrDecompose } from './decompositions';
+import { svd, luDecompose, qrDecompose, eigenDecompose } from './decompositions';
 
 // NFR-5: results accurate to at least 6 decimal places. Every reconstruction
 // identity below is asserted to hold within this tolerance.
@@ -111,5 +111,41 @@ describe('qrDecompose: A = Q * R (Gram-Schmidt)', () => {
     expectMatrixClose(mul(Q, R), [[1, 2], [2, 4]]);
     expect(Q.isOrthogonal()).toBe(true);
     expect(Math.abs(R.d)).toBeLessThan(TOL); // trailing R entry collapses to 0
+  });
+});
+
+describe('eigenDecompose: A = P * D * P^-1', () => {
+  const diagonalisable = ['identity', 'symmetric', 'singular', 'distinctReal'];
+  for (const name of diagonalisable) {
+    it(`reconstructs ${name}`, () => {
+      const values = MATRICES[name];
+      const result = eigenDecompose(values);
+      expect(result).not.toBeNull();
+      const { P, D, Pinv } = result!;
+      expectMatrixClose(mul(mul(P, D), Pinv), values);
+
+      // D is diagonal, and P * Pinv is the identity.
+      expect(Math.abs(D.b)).toBeLessThan(TOL);
+      expect(Math.abs(D.c)).toBeLessThan(TOL);
+      expectMatrixClose(mul(P, Pinv), [[1, 0], [0, 1]]);
+
+      // Diagonal of D holds the eigenvalues from Matrix2x2.eigenvalues().
+      const spectrum = new Matrix2x2(values).eigenvalues();
+      expect(spectrum.type).toBe('real');
+      if (spectrum.type === 'real') {
+        expect(Math.abs(D.a - spectrum.values[0])).toBeLessThan(TOL);
+        expect(Math.abs(D.d - spectrum.values[1])).toBeLessThan(TOL);
+      }
+    });
+  }
+
+  it('returns null for a rotation (complex eigenvalues)', () => {
+    expect(eigenDecompose(MATRICES.rotation)).toBeNull();
+    expect(eigenDecompose([[0, -1], [1, 0]])).toBeNull();
+  });
+
+  it('returns null for a defective matrix (shear: repeated eigenvalue, 1-D eigenspace)', () => {
+    expect(eigenDecompose(MATRICES.shear)).toBeNull();
+    expect(eigenDecompose([[3, 1], [0, 3]])).toBeNull();
   });
 });

@@ -154,6 +154,51 @@ export function qrDecompose(input: Matrix2x2Input): { Q: Matrix2x2; R: Matrix2x2
 }
 
 // ---------------------------------------------------------------------------
+// Eigendecomposition  —  A = P * D * P^-1
+// ---------------------------------------------------------------------------
+
+// Eigenvalues are taken from Matrix2x2.eigenvalues() rather than recomputed
+// here. Returns null when they are a complex-conjugate pair, and when they are
+// a real repeated value whose eigenspace is only 1-dimensional (a defective
+// matrix such as a shear) — neither case is diagonalisable over the reals. A
+// repeated eigenvalue with A - lambda*I == 0 is already diagonal and is
+// returned as such.
+export function eigenDecompose(
+  input: Matrix2x2Input,
+): { P: Matrix2x2; D: Matrix2x2; Pinv: Matrix2x2 } | null {
+  const m = coerce(input);
+  const spectrum = m.eigenvalues();
+  if (spectrum.type === 'complex') return null;
+
+  const [lambda1, lambda2] = spectrum.values;
+  const D = new Matrix2x2([[lambda1, 0], [0, lambda2]]);
+
+  if (Math.abs(lambda1 - lambda2) <= EPS) {
+    const residual = Math.max(
+      Math.abs(m.a - lambda1), Math.abs(m.b),
+      Math.abs(m.c), Math.abs(m.d - lambda1),
+    );
+    if (residual > EPS) return null; // defective: geometric multiplicity 1
+    return { P: Matrix2x2.identity(), D, Pinv: Matrix2x2.identity() };
+  }
+
+  const P = fromColumns(eigenvector(m, lambda1), eigenvector(m, lambda2));
+  const Pinv = P.inverse();
+  if (!Pinv) return null; // eigenvectors dependent (shouldn't happen for distinct lambda)
+  return { P, D, Pinv };
+}
+
+// Unit null-vector of (A - lambda*I). Row 1 of that matrix is orthogonal to
+// [b, lambda - a] and row 2 to [lambda - d, c]; for an actual eigenvalue either
+// candidate spans the eigenspace, so we take whichever is better conditioned.
+function eigenvector(m: Matrix2x2, lambda: number): Vec {
+  const cand1: Vec = [m.b, lambda - m.a];
+  const cand2: Vec = [lambda - m.d, m.c];
+  const v = (norm(cand1) as number) >= (norm(cand2) as number) ? cand1 : cand2;
+  return normalize(v) ?? [1, 0]; // A - lambda*I == 0: any unit vector serves
+}
+
+// ---------------------------------------------------------------------------
 // small shared helpers
 // ---------------------------------------------------------------------------
 
