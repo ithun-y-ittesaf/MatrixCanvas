@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
-import { svdStops } from './decompositionStops';
+import { svdStops, eigenStops } from './decompositionStops';
 
 // NFR-5: accurate to at least 6 decimal places.
 const TOL = 1e-6;
@@ -52,5 +52,27 @@ describe('svdStops', () => {
     const fromRaw = svdStops(values);
     const fromInstance = svdStops(new Matrix2x2(values));
     fromRaw.forEach((stop, i) => expectMatrixClose(stop, fromInstance[i]));
+  });
+});
+
+describe('eigenStops', () => {
+  const diagonalisable = ['identity', 'symmetric', 'singular', 'distinctReal'];
+  for (const name of diagonalisable) {
+    it(`${name}: identity -> Pinv -> D*Pinv -> A (4 stops)`, () => {
+      const stops = eigenStops(MATRICES[name]);
+      expect(stops).not.toBeNull();
+      expect(stops!).toHaveLength(4);
+      expect(stops!.every(isFiniteMatrix)).toBe(true);
+      expectMatrixClose(stops![0], IDENTITY);
+      expectMatrixClose(stops![stops!.length - 1], MATRICES[name]);
+    });
+  }
+
+  it('returns null for complex eigenvalues (a rotation)', () => {
+    expect(eigenStops(MATRICES.rotation)).toBeNull();
+  });
+
+  it('returns null for a defective matrix (a shear)', () => {
+    expect(eigenStops(MATRICES.shear)).toBeNull();
   });
 });

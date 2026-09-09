@@ -9,7 +9,7 @@
 // "applied on top", i.e. left-multiplied onto the running product).
 
 import { type Matrix2x2Values } from './Matrix2x2';
-import { svd, type Matrix2x2Input } from './decompositions';
+import { svd, eigenDecompose, type Matrix2x2Input } from './decompositions';
 
 const IDENTITY: Matrix2x2Values = [[1, 0], [0, 1]];
 
@@ -41,4 +41,23 @@ export function svdStops(input: Matrix2x2Input): Matrix2x2Values[] {
   const vt = transpose(V.values);
   const sigmaVt = matmul(Sigma.values, vt);
   return [IDENTITY, vt, sigmaVt, matmul(U.values, sigmaVt)];
+}
+
+// ---------------------------------------------------------------------------
+// Eigendecomposition:  identity -> Pinv -> D*Pinv -> P*D*Pinv (= A)
+// ---------------------------------------------------------------------------
+
+// Three steps: change of basis into the eigenbasis, the diagonal scale D along
+// the eigen-axes, then the change of basis back. The proposal names the first
+// step "P"; with this repo's `A = P*D*Pinv` convention (P's columns are the
+// eigenvectors) the matrix that maps the standard basis into the eigenbasis is
+// Pinv, so that is the first stop. Returns null when the matrix has no real
+// eigendecomposition (complex eigenvalues, or a defective repeated eigenvalue),
+// mirroring eigenDecompose.
+export function eigenStops(input: Matrix2x2Input): Matrix2x2Values[] | null {
+  const decomposed = eigenDecompose(input);
+  if (!decomposed) return null;
+  const { P, D, Pinv } = decomposed;
+  const dPinv = matmul(D.values, Pinv.values);
+  return [IDENTITY, Pinv.values, dPinv, matmul(P.values, dPinv)];
 }
