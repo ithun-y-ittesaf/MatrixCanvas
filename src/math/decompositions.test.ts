@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
-import { svd, luDecompose } from './decompositions';
+import { svd, luDecompose, qrDecompose } from './decompositions';
 
 // NFR-5: results accurate to at least 6 decimal places. Every reconstruction
 // identity below is asserted to hold within this tolerance.
@@ -91,5 +91,25 @@ describe('luDecompose: A = L * U (no pivoting)', () => {
     const fromInstance = luDecompose(new Matrix2x2([[2, 1], [4, 3]]));
     expect(fromInstance).not.toBeNull();
     expectMatrixClose(mul(fromInstance!.L, fromInstance!.U), [[2, 1], [4, 3]]);
+  });
+});
+
+describe('qrDecompose: A = Q * R (Gram-Schmidt)', () => {
+  for (const [name, values] of Object.entries(MATRICES)) {
+    it(`reconstructs ${name}`, () => {
+      const { Q, R } = qrDecompose(values);
+      expectMatrixClose(mul(Q, R), values);
+
+      // Q is orthogonal, R is upper-triangular.
+      expect(Q.isOrthogonal()).toBe(true);
+      expect(Math.abs(R.c)).toBeLessThan(TOL);
+    });
+  }
+
+  it('handles a rank-deficient matrix (second column parallel to the first)', () => {
+    const { Q, R } = qrDecompose([[1, 2], [2, 4]]);
+    expectMatrixClose(mul(Q, R), [[1, 2], [2, 4]]);
+    expect(Q.isOrthogonal()).toBe(true);
+    expect(Math.abs(R.d)).toBeLessThan(TOL); // trailing R entry collapses to 0
   });
 });

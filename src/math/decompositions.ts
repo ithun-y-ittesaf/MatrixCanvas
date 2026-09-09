@@ -8,7 +8,7 @@
 // identity (A = U*Sigma*V^T, A = L*U, A = Q*R, A = P*D*P^-1) to within the
 // project's NFR-5 tolerance of 6 decimal places; see decompositions.test.ts.
 
-import { eigs, multiply, transpose } from 'mathjs';
+import { eigs, multiply, transpose, dot, norm } from 'mathjs';
 import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
 
 export type Matrix2x2Input = Matrix2x2 | Matrix2x2Values;
@@ -119,6 +119,37 @@ export function luDecompose(
   return {
     L: new Matrix2x2([[1, 0], [l21, 1]]),
     U: new Matrix2x2([[a, b], [0, u22]]),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// QR  —  A = Q * R  (classical Gram-Schmidt on the columns)
+// ---------------------------------------------------------------------------
+
+// Orthonormalise the columns [a1 a2] of A: e1 is a1 normalised, e2 is what
+// remains of a2 after removing its e1 component, normalised. R is upper
+// triangular with the projection coefficients. A degenerate column (zero, or
+// parallel to the first) leaves a zero on R's diagonal and its Q column is
+// filled with a unit vector orthogonal to the other, so Q stays orthonormal and
+// Q*R still reproduces A.
+export function qrDecompose(input: Matrix2x2Input): { Q: Matrix2x2; R: Matrix2x2 } {
+  const m = coerce(input);
+  const a1: Vec = [m.a, m.c];
+  const a2: Vec = [m.b, m.d];
+
+  const n1 = norm(a1) as number;
+  const e1: Vec = n1 > EPS ? [a1[0] / n1, a1[1] / n1] : [1, 0];
+  const r11 = n1 > EPS ? n1 : 0;
+
+  const r12 = dot(a2, e1) as number;
+  const u2: Vec = [a2[0] - r12 * e1[0], a2[1] - r12 * e1[1]];
+  const n2 = norm(u2) as number;
+  const e2: Vec = n2 > EPS ? [u2[0] / n2, u2[1] / n2] : [-e1[1], e1[0]];
+  const r22 = n2 > EPS ? n2 : 0;
+
+  return {
+    Q: fromColumns(e1, e2),
+    R: new Matrix2x2([[r11, r12], [0, r22]]),
   };
 }
 
