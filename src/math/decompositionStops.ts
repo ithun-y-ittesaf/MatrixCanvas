@@ -9,7 +9,12 @@
 // "applied on top", i.e. left-multiplied onto the running product).
 
 import { type Matrix2x2Values } from './Matrix2x2';
-import { svd, eigenDecompose, type Matrix2x2Input } from './decompositions';
+import {
+  svd,
+  luDecompose,
+  eigenDecompose,
+  type Matrix2x2Input,
+} from './decompositions';
 
 const IDENTITY: Matrix2x2Values = [[1, 0], [0, 1]];
 
@@ -60,4 +65,20 @@ export function eigenStops(input: Matrix2x2Input): Matrix2x2Values[] | null {
   const { P, D, Pinv } = decomposed;
   const dPinv = matmul(D.values, Pinv.values);
   return [IDENTITY, Pinv.values, dPinv, matmul(P.values, dPinv)];
+}
+
+// ---------------------------------------------------------------------------
+// LU:  identity -> L -> L*U (= A)
+// ---------------------------------------------------------------------------
+
+// One stop per elimination step. A 2x2 unpivoted elimination has exactly one
+// step — clearing the (2,1) entry — and its elementary shear is L itself
+// ([[1,0],[c/a,1]]). The final step applies the upper-triangular factor U on
+// top to resolve the full matrix. Returns null when the top-left pivot is zero
+// (no unpivoted LU), mirroring luDecompose.
+export function luStops(input: Matrix2x2Input): Matrix2x2Values[] | null {
+  const decomposed = luDecompose(input);
+  if (!decomposed) return null;
+  const { L, U } = decomposed;
+  return [IDENTITY, L.values, matmul(L.values, U.values)];
 }

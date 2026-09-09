@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
-import { svdStops, eigenStops } from './decompositionStops';
+import { svdStops, eigenStops, luStops } from './decompositionStops';
 
 // NFR-5: accurate to at least 6 decimal places.
 const TOL = 1e-6;
@@ -74,5 +74,28 @@ describe('eigenStops', () => {
 
   it('returns null for a defective matrix (a shear)', () => {
     expect(eigenStops(MATRICES.shear)).toBeNull();
+  });
+});
+
+describe('luStops', () => {
+  for (const [name, values] of Object.entries(MATRICES)) {
+    it(`${name}: identity -> L -> A (3 stops)`, () => {
+      const stops = luStops(values);
+      expect(stops).not.toBeNull();
+      expect(stops!).toHaveLength(3);
+      expect(stops!.every(isFiniteMatrix)).toBe(true);
+      expectMatrixClose(stops![0], IDENTITY);
+      expectMatrixClose(stops![2], values);
+
+      // Stop 1 is the elementary shear L: unit lower-triangular.
+      const l = stops![1];
+      expect(l[0][0]).toBe(1);
+      expect(l[0][1]).toBe(0);
+      expect(l[1][1]).toBe(1);
+    });
+  }
+
+  it('returns null when the top-left pivot is zero', () => {
+    expect(luStops([[0, 1], [1, 0]])).toBeNull();
   });
 });
