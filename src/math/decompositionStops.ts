@@ -8,15 +8,20 @@
 // each decomposition contributes, in application order (each new factor is
 // "applied on top", i.e. left-multiplied onto the running product).
 
-import { type Matrix2x2Values } from './Matrix2x2';
+import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
 import {
   svd,
   luDecompose,
+  qrDecompose,
   eigenDecompose,
   type Matrix2x2Input,
 } from './decompositions';
 
 const IDENTITY: Matrix2x2Values = [[1, 0], [0, 1]];
+
+function raw(input: Matrix2x2Input): Matrix2x2Values {
+  return input instanceof Matrix2x2 ? input.values : input;
+}
 
 function matmul(x: Matrix2x2Values, y: Matrix2x2Values): Matrix2x2Values {
   return [
@@ -81,4 +86,22 @@ export function luStops(input: Matrix2x2Input): Matrix2x2Values[] | null {
   if (!decomposed) return null;
   const { L, U } = decomposed;
   return [IDENTITY, L.values, matmul(L.values, U.values)];
+}
+
+// ---------------------------------------------------------------------------
+// QR:  identity -> [e1 | a2] -> Q -> Q*R (= A)
+// ---------------------------------------------------------------------------
+
+// One stop per column of the Gram-Schmidt process: after column 1 the first
+// basis vector is fixed to e1 (a1 normalised) while the second column is still
+// the raw a2; after column 2 both columns are orthonormal (Q). The final step
+// applies R on top to resolve the full matrix.
+export function qrStops(input: Matrix2x2Input): Matrix2x2Values[] {
+  const { Q, R } = qrDecompose(input);
+  const a = raw(input);
+  const afterColumn1: Matrix2x2Values = [
+    [Q.a, a[0][1]],
+    [Q.c, a[1][1]],
+  ];
+  return [IDENTITY, afterColumn1, Q.values, matmul(Q.values, R.values)];
 }

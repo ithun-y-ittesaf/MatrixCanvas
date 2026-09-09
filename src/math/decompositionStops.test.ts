@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
-import { svdStops, eigenStops, luStops } from './decompositionStops';
+import { svdStops, eigenStops, luStops, qrStops } from './decompositionStops';
 
 // NFR-5: accurate to at least 6 decimal places.
 const TOL = 1e-6;
@@ -97,5 +97,33 @@ describe('luStops', () => {
 
   it('returns null when the top-left pivot is zero', () => {
     expect(luStops([[0, 1], [1, 0]])).toBeNull();
+  });
+});
+
+describe('qrStops', () => {
+  for (const [name, values] of Object.entries(MATRICES)) {
+    it(`${name}: identity -> [e1|a2] -> Q -> A (4 stops)`, () => {
+      const stops = qrStops(values);
+      expect(stops).toHaveLength(4);
+      expect(stops.every(isFiniteMatrix)).toBe(true);
+      expectMatrixClose(stops[0], IDENTITY);
+      expectMatrixClose(stops[3], values);
+
+      // Stop 1: first column is unit length, second column is the raw a2.
+      const s1 = stops[1];
+      expect(Math.abs(Math.hypot(s1[0][0], s1[1][0]) - 1)).toBeLessThan(TOL);
+      expect(s1[0][1]).toBe(values[0][1]);
+      expect(s1[1][1]).toBe(values[1][1]);
+
+      // Stop 2 is orthogonal (Q).
+      expect(new Matrix2x2(stops[2]).isOrthogonal()).toBe(true);
+    });
+  }
+
+  it('accepts a Matrix2x2 instance and raw values interchangeably', () => {
+    const values: Matrix2x2Values = [[4, 1], [2, 3]];
+    const fromRaw = qrStops(values);
+    const fromInstance = qrStops(new Matrix2x2(values));
+    fromRaw.forEach((stop, i) => expectMatrixClose(stop, fromInstance[i]));
   });
 });
