@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Matrix2x2, type Matrix2x2Values } from './Matrix2x2';
-import { svd } from './decompositions';
+import { svd, luDecompose } from './decompositions';
 
 // NFR-5: results accurate to at least 6 decimal places. Every reconstruction
 // identity below is asserted to hold within this tolerance.
@@ -63,5 +63,33 @@ describe('svd: A = U * Sigma * V^T', () => {
   it('accepts raw values as well as a Matrix2x2 instance', () => {
     const { U, Sigma, V } = svd([[2, 0], [0, 3]]);
     expectMatrixClose(mul(mul(U, Sigma), transpose(V)), [[2, 0], [0, 3]]);
+  });
+});
+
+describe('luDecompose: A = L * U (no pivoting)', () => {
+  for (const [name, values] of Object.entries(MATRICES)) {
+    it(`reconstructs ${name}`, () => {
+      const result = luDecompose(values);
+      expect(result).not.toBeNull();
+      const { L, U } = result!;
+      expectMatrixClose(mul(L, U), values);
+
+      // L is unit lower-triangular, U is upper-triangular.
+      expect(L.a).toBe(1);
+      expect(L.d).toBe(1);
+      expect(L.b).toBe(0);
+      expect(Math.abs(U.c)).toBeLessThan(TOL);
+    });
+  }
+
+  it('returns null when the top-left pivot is zero', () => {
+    expect(luDecompose([[0, 1], [1, 0]])).toBeNull();
+    expect(luDecompose([[0, 2], [3, 4]])).toBeNull();
+  });
+
+  it('accepts a Matrix2x2 instance as well as raw values', () => {
+    const fromInstance = luDecompose(new Matrix2x2([[2, 1], [4, 3]]));
+    expect(fromInstance).not.toBeNull();
+    expectMatrixClose(mul(fromInstance!.L, fromInstance!.U), [[2, 1], [4, 3]]);
   });
 });

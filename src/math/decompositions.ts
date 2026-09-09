@@ -101,6 +101,28 @@ export function svd(input: Matrix2x2Input): {
 }
 
 // ---------------------------------------------------------------------------
+// LU  —  A = L * U  (Doolittle, no pivoting)
+// ---------------------------------------------------------------------------
+
+// The only obstruction to an unpivoted LU of a 2x2 is a zero pivot in the top-
+// left entry, in which case we return null (the caller can fall back to a
+// pivoting solver). Otherwise the factorisation is a one-step elimination and
+// is exact up to floating-point round-off.
+export function luDecompose(
+  input: Matrix2x2Input,
+): { L: Matrix2x2; U: Matrix2x2 } | null {
+  const { a, b, c, d } = coerce(input);
+  if (Math.abs(a) <= EPS) return null;
+
+  const l21 = c / a;
+  const u22 = d - l21 * b;
+  return {
+    L: new Matrix2x2([[1, 0], [l21, 1]]),
+    U: new Matrix2x2([[a, b], [0, u22]]),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // small shared helpers
 // ---------------------------------------------------------------------------
 
