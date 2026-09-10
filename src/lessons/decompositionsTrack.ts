@@ -1,5 +1,6 @@
 import type { Lesson } from './types';
 import { rectanglePresetVertices } from '../store/appStore';
+import { presetValues } from './presetValues';
 
 // Decompositions track content per the proposal's Feature 3 spec:
 // Eigendecomposition, SVD, LU, QR/Gram-Schmidt. Each lesson builds on the
@@ -61,6 +62,54 @@ const eigendecompositionLesson: Lesson = {
   ],
 };
 
+const svdLesson: Lesson = {
+  id: 'decompositions-svd',
+  track: 'decompositions',
+  title: 'Singular Value Decomposition',
+  steps: [
+    {
+      id: 'svd-recall',
+      title: 'A shear you\'ve already met',
+      explanation:
+        "Recall the horizontal shear from the Beginner track's Shear lesson — it slants the " +
+        "rectangle into a parallelogram. A shear doesn't look like a simple rotation or a " +
+        "simple stretch, but here's a fact with no exceptions: every matrix, without " +
+        'exception, factors into rotate, then stretch along perpendicular axes, then rotate ' +
+        'again. That factorization is the Singular Value Decomposition, A = U·Σ·Vᵀ.',
+      matrix: presetValues('Horizontal Shear'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+      katex: '\\begin{bmatrix}1 & 1 \\\\ 0 & 1\\end{bmatrix}',
+    },
+    {
+      id: 'svd-decompose',
+      title: 'Watching A = U·Σ·Vᵀ unfold',
+      explanation:
+        'Press Next in the panel below to watch this shear build up in three moves: first an ' +
+        "input rotation Vᵀ lines the rectangle's corners up with a pair of perpendicular " +
+        'stretch axes (still a rectangle — rotation alone never distorts a shape). Then Σ ' +
+        "stretches along exactly those axes. Then an output rotation U tilts the result into " +
+        'the sheared parallelogram you saw a moment ago.',
+      matrix: presetValues('Horizontal Shear'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+      decomposition: 'svd',
+    },
+    {
+      id: 'svd-wrapup',
+      title: 'Singular values measure the stretch',
+      explanation:
+        'Check the Properties panel: singular values read ≈1.618034 and ≈0.618034 — the ' +
+        'golden ratio φ and its reciprocal 1/φ, a small curiosity of this particular shear. ' +
+        "In general, the two singular values are exactly Σ's stretch factors: their ratio " +
+        'says how lopsided the stretch is, and their product always equals |det A| — here, ' +
+        '1.618 × 0.618 ≈ 1, matching this shear\'s determinant of 1 (area is preserved even ' +
+        'though the shape clearly isn\'t).',
+      matrix: presetValues('Horizontal Shear'),
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+    },
+  ],
+};
+
 export const DECOMPOSITIONS_TRACK: Lesson[] = [
   eigendecompositionLesson,
+  svdLesson,
 ];
