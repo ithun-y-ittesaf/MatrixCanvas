@@ -249,6 +249,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
 //
 // Vectors/shapes are fully replaced (not merged) on every step, so a step
 // that omits `vectors`/`shapes` clears whatever the previous step loaded.
+//
+// For a step with `decomposition` set, this still sets matrixValues to the
+// step's (fully transformed) matrix as a sane at-rest default — but
+// LessonRunner mounts a DecompositionPlayer for that step, and its own
+// mount effect immediately takes over via triggerAnimationFrom, resetting
+// the canvas to the identity start of that decomposition's stop sequence.
 function applyLessonStep(store: AppStore, step: LessonStep): void {
   store.setMatrixValues(step.matrix);
 

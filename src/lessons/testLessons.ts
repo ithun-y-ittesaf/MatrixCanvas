@@ -54,4 +54,29 @@ export const TEST_LESSON_REFLECT_SHAPE: Lesson = {
   ],
 };
 
-export const TEST_LESSONS: Lesson[] = [TEST_LESSON_IDENTITY_SCALE, TEST_LESSON_REFLECT_SHAPE];
+// Exercises the `decomposition` field (see LessonStep in types.ts): this
+// step's canvas is driven by DecompositionPlayer stepping through the
+// matrix's SVD, not a single static application of it like the two lessons
+// above. See decompositionLessonSteps.test.ts for the guard that every
+// decomposition-flagged step (here and in the real curriculum) actually
+// builds a sequence.
+export const TEST_LESSON_DECOMPOSITION_SVD: Lesson = {
+  id: 'test-decomposition-svd',
+  track: 'decompositions',
+  title: '[Test] SVD of a Shear',
+  steps: [
+    {
+      id: 'step-svd-shear',
+      title: 'SVD: rotate, scale, rotate',
+      explanation: 'Any matrix decomposes into a rotation, an axis-aligned scale, and another rotation.',
+      matrix: [[2, 1], [1, 1]],
+      decomposition: 'svd',
+    },
+  ],
+};
+
+export const TEST_LESSONS: Lesson[] = [
+  TEST_LESSON_IDENTITY_SCALE,
+  TEST_LESSON_REFLECT_SHAPE,
+  TEST_LESSON_DECOMPOSITION_SVD,
+];
