@@ -21,6 +21,11 @@ import { useAppStore } from '../store/appStore';
 // this component's own triggerAnimationFrom calls write matrixValues, so
 // computing `sequence` from it would recompute a new sequence on every step
 // and fight itself.
+//
+// Unlike the other floating panels (MatrixInput, VectorPanel, ...), this
+// component doesn't position itself with `absolute` — that's left to the
+// caller (via `className`) since it's meant to be usable in more than one
+// layout (standalone demo, or embedded by LessonRunner).
 interface DecompositionPlayerProps {
   sequence: DecompositionSequence;
   className?: string;
@@ -52,6 +57,7 @@ export default function DecompositionPlayer({ sequence, className }: Decompositi
 
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === stops.length - 1;
+  const totalSteps = sequence.steps.length;
 
   const goTo = (target: number) => {
     const clamped = Math.max(0, Math.min(stops.length - 1, target));
@@ -65,17 +71,65 @@ export default function DecompositionPlayer({ sequence, className }: Decompositi
     triggerAnimationFrom(stops[stepIndex - 1], stops[stepIndex]);
   };
 
+  // "Step 2 of 3: Scaling along the singular values (Σ)" once under way;
+  // an intro line while still sitting at the untransformed start.
+  const stepLabel = isFirst
+    ? 'Press Next to begin'
+    : `Step ${stepIndex} of ${totalSteps}: ${sequence.steps[stepIndex - 1].label}`;
+
   return (
-    <div className={className}>
-      <button onClick={() => goTo(stepIndex - 1)} disabled={isFirst}>
-        Prev
-      </button>
-      <button onClick={handleReplay} disabled={isFirst}>
-        Replay
-      </button>
-      <button onClick={() => goTo(stepIndex + 1)} disabled={isLast}>
-        Next
-      </button>
+    <div
+      className={`rounded-xl border border-white/10 px-5 py-4 bg-black/50 backdrop-blur-md
+                  shadow-2xl flex flex-col gap-3 font-sans w-[min(92vw,360px)] ${className ?? ''}`}
+    >
+      <p className="text-slate-500 uppercase tracking-widest text-[10px]">{sequence.title}</p>
+      <p className="text-slate-200 text-sm min-h-[2.5em]">{stepLabel}</p>
+
+      {/* Progress dots — one per stop, current filled, reached ones lit. */}
+      <div className="flex items-center gap-1.5">
+        {stops.map((_, i) => (
+          <span
+            key={i}
+            className={
+              'h-1.5 flex-1 rounded-full transition-colors ' +
+              (i <= stepIndex ? 'bg-blue-500' : 'bg-white/10')
+            }
+          />
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <button
+          onClick={() => goTo(stepIndex - 1)}
+          disabled={isFirst}
+          className="px-3 py-1.5 rounded-lg border border-white/10 text-slate-400 text-xs
+                     hover:text-white hover:border-white/20 transition-colors
+                     disabled:opacity-30 disabled:pointer-events-none"
+        >
+          ← Prev
+        </button>
+
+        <button
+          onClick={handleReplay}
+          disabled={isFirst}
+          title="Replay this step"
+          className="px-3 py-1.5 rounded-lg border border-white/10 text-slate-400 text-xs
+                     hover:text-white hover:border-white/20 transition-colors
+                     disabled:opacity-30 disabled:pointer-events-none"
+        >
+          ⟲ Replay
+        </button>
+
+        <button
+          onClick={() => goTo(stepIndex + 1)}
+          disabled={isLast}
+          className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95
+                     text-white text-xs font-semibold transition-all
+                     disabled:opacity-30 disabled:pointer-events-none disabled:active:scale-100"
+        >
+          Next →
+        </button>
+      </div>
     </div>
   );
 }
