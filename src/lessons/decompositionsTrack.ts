@@ -109,7 +109,52 @@ const svdLesson: Lesson = {
   ],
 };
 
+const luLesson: Lesson = {
+  id: 'decompositions-lu',
+  track: 'decompositions',
+  title: 'LU Decomposition',
+  steps: [
+    {
+      id: 'lu-recall',
+      title: 'Solving systems by elimination',
+      explanation:
+        'Gaussian elimination — the standard way to solve a system of linear equations by ' +
+        "hand — clears out entries below the diagonal one at a time. Run it on this matrix's " +
+        'single entry below the diagonal and the row operation you\'d write down is itself a ' +
+        'factorization: A = L·U, an elimination shear (L) times the upper-triangular result ' +
+        'elimination leaves behind (U).',
+      matrix: [[2, 1], [4, 3]],
+      vectors: [{ x: 1, y: 0 }, { x: 0, y: 1 }],
+    },
+    {
+      id: 'lu-decompose',
+      title: 'Watching A = L·U unfold',
+      explanation:
+        'Press Next in the panel below: first the identity becomes L, the elimination shear ' +
+        'that clears this matrix\'s (2, 1) entry (its multiplier, 2, is exactly c/a for this ' +
+        'matrix). Then U — the upper-triangular matrix elimination leaves behind — is applied ' +
+        'on top, landing on the same transform e1 and e2 followed a moment ago.',
+      matrix: [[2, 1], [4, 3]],
+      vectors: [{ x: 1, y: 0 }, { x: 0, y: 1 }],
+      decomposition: 'lu',
+    },
+    {
+      id: 'lu-wrapup',
+      title: 'Why factor it this way?',
+      explanation:
+        'Check the Properties panel: det reads 2. L is unit lower-triangular, so det(L) is ' +
+        'always exactly 1, no matter the matrix — all of a matrix\'s area-scaling lives in U, ' +
+        'whose determinant is just the product of its diagonal entries (2 × 1 = 2, matching ' +
+        'the panel). That\'s also why LU is the go-to for solving Ax = b in practice: two ' +
+        'triangular systems (Ly = b, then Ux = y) are far cheaper to solve than one general one.',
+      matrix: [[2, 1], [4, 3]],
+      shapes: [{ type: 'rectangle', vertices: rectanglePresetVertices() }],
+    },
+  ],
+};
+
 export const DECOMPOSITIONS_TRACK: Lesson[] = [
   eigendecompositionLesson,
   svdLesson,
+  luLesson,
 ];
