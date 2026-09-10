@@ -119,7 +119,7 @@ function drawScene(
   ctx: CanvasRenderingContext2D,
   drawingShapeId: string | null,
 ): Record<string, number> {
-  const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
+  const { matrixValues, animFrom, animProgress, customVectors, shapes } = useAppStore.getState();
   const W = canvas.width;
   const H = canvas.height;
   const cx = W / 2;
@@ -127,8 +127,11 @@ function drawScene(
 
   ctx.clearRect(0, 0, W, H);
 
+  // animFrom is identity for every tween except DecompositionPlayer's, which
+  // points it at the previous stop so animProgress tweens stop-to-stop.
+  const from = new Matrix2x2(animFrom);
   const target = new Matrix2x2(matrixValues);
-  const display = Matrix2x2.identity().interpolateDecomposed(target, animProgress);
+  const display = from.interpolateDecomposed(target, animProgress);
 
   const tc = (wx: number, wy: number): [number, number] => {
     const [tx, ty] = display.multiply([wx, wy]);
