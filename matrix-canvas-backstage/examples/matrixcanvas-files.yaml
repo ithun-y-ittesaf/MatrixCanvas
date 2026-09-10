@@ -1,0 +1,44 @@
+# Demo only: registering individual source files as Components, just to see
+# how registering/updating works. Not how you'd model a real catalog (a
+# Component should normally represent a deployable service/website/library,
+# not a single file) — delete this once you're done exploring.
+
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: matrixinput-tsx
+  description: Matrix input UI component
+spec:
+  type: library
+  lifecycle: experimental
+  owner: user:default/guest
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: shapepanel-tsx
+  description: Shape panel UI component
+spec:
+  type: library
+  lifecycle: experimental
+  owner: user:default/guest
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: transformcanvas-tsx
+  description: Transform canvas rendering component
+spec:
+  type: library
+  lifecycle: experimental
+  owner: user:default/guest
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: vectorpanel-tsx
+  description: Vector panel UI component
+spec:
+  type: library
+  lifecycle: experimental
+  owner: user:default/guest
