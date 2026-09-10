@@ -153,8 +153,54 @@ const luLesson: Lesson = {
   ],
 };
 
+const qrLesson: Lesson = {
+  id: 'decompositions-qr',
+  track: 'decompositions',
+  title: 'QR Decomposition',
+  steps: [
+    {
+      id: 'qr-recall',
+      title: 'Straightening out a matrix\'s columns',
+      explanation:
+        'Recall from the Identity lesson: a matrix\'s columns are where it sends e1 and e2. ' +
+        'Those columns — (3, 4) and (1, 1) here — don\'t have to be perpendicular or unit ' +
+        'length, and usually aren\'t. QR builds an orthonormal frame Q that points the same ' +
+        'way those columns do, plus a triangular R recording exactly how to stretch Q back ' +
+        'out to the original columns: A = Q·R.',
+      matrix: [[3, 1], [4, 1]],
+      vectors: [{ x: 3, y: 4 }, { x: 1, y: 1 }],
+    },
+    {
+      id: 'qr-decompose',
+      title: 'Watching A = Q·R unfold via Gram-Schmidt',
+      explanation:
+        'Press Next in the panel below: first column 1, (3, 4) — a 3-4-5 triangle — ' +
+        'straightens into the unit vector (0.6, 0.8), simple division by its own length of 5. ' +
+        'Then column 2 gets its (0.6, 0.8)-component subtracted off and what remains gets ' +
+        'normalized into a second perpendicular unit vector, completing the orthonormal frame ' +
+        'Q. Then R is applied on top, stretching Q back out to land on A.',
+      matrix: [[3, 1], [4, 1]],
+      vectors: [{ x: 3, y: 4 }, { x: 1, y: 1 }],
+      decomposition: 'qr',
+    },
+    {
+      id: 'qr-wrapup',
+      title: 'Q really is orthonormal',
+      explanation:
+        'This is Q itself, loaded directly onto the canvas — not A. Check the Properties ' +
+        "panel: orthogonal now reads yes, confirming Q's two columns really are perpendicular " +
+        'unit vectors, exactly what Gram-Schmidt promises no matter what matrix you start ' +
+        'from. QR underlies least-squares curve fitting and is one of the more numerically ' +
+        'stable ways to solve a linear system, for exactly this reason.',
+      matrix: [[0.6, 0.8], [0.8, -0.6]],
+      vectors: [{ x: 0.6, y: 0.8 }, { x: 0.8, y: -0.6 }],
+    },
+  ],
+};
+
 export const DECOMPOSITIONS_TRACK: Lesson[] = [
   eigendecompositionLesson,
   svdLesson,
   luLesson,
+  qrLesson,
 ];
