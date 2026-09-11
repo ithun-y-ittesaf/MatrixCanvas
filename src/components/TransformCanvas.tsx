@@ -30,12 +30,19 @@ function gridRangeFor(width: number, height: number, scale: number): number {
   return Math.max(6, Math.ceil(visibleHalfExtent * 1.6) + 2);
 }
 
-// The same identity->target interpolation drawScene uses, factored out so
-// the drag/hit-test handlers below can convert between screen and world
-// space exactly the way the current frame was drawn.
-function computeDisplay(matrixValues: Matrix2x2['values'], animProgress: number): Matrix2x2 {
+// The same animFrom->matrixValues interpolation drawScene uses, factored
+// out so the drag/hit-test handlers below can convert between screen and
+// world space exactly the way the current frame was drawn. animFrom is
+// identity for every tween except DecompositionPlayer's, which points it
+// at the previous stop so animProgress tweens stop-to-stop.
+function computeDisplay(
+  animFrom: Matrix2x2['values'],
+  matrixValues: Matrix2x2['values'],
+  animProgress: number,
+): Matrix2x2 {
+  const from = new Matrix2x2(animFrom);
   const target = new Matrix2x2(matrixValues);
-  return Matrix2x2.identity().interpolateDecomposed(target, animProgress);
+  return from.interpolateDecomposed(target, animProgress);
 }
 
 function worldToScreen(wx: number, wy: number, cx: number, cy: number, scale: number): [number, number] {
@@ -151,7 +158,7 @@ function drawScene(
   drawingShapeId: string | null,
   scale: number,
 ): Record<string, number> {
-  const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
+  const { matrixValues, animFrom, animProgress, customVectors, shapes } = useAppStore.getState();
   const W = canvas.width;
   const H = canvas.height;
   const cx = W / 2;
@@ -160,7 +167,7 @@ function drawScene(
 
   ctx.clearRect(0, 0, W, H);
 
-  const display = computeDisplay(matrixValues, animProgress);
+  const display = computeDisplay(animFrom, matrixValues, animProgress);
 
   const tc = (wx: number, wy: number): [number, number] => {
     const [tx, ty] = display.multiply([wx, wy]);
@@ -482,8 +489,8 @@ export default function TransformCanvas({
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
         const scale = scaleRef.current;
-        const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
-        const display = computeDisplay(matrixValues, animProgress);
+        const { matrixValues, animFrom, animProgress, customVectors, shapes } = useAppStore.getState();
+        const display = computeDisplay(animFrom, matrixValues, animProgress);
 
         for (let i = customVectors.length - 1; i >= 0; i--) {
           const v = customVectors[i];
@@ -587,8 +594,8 @@ export default function TransformCanvas({
     const cx = canvas.width / 2;
     const cy = canvas.height / 2;
     const scale = scaleRef.current;
-    const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
-    const display = computeDisplay(matrixValues, animProgress);
+    const { matrixValues, animFrom, animProgress, customVectors, shapes } = useAppStore.getState();
+    const display = computeDisplay(animFrom, matrixValues, animProgress);
     const invDisplay = display.inverse();
 
     // Reverse order — later items draw on top, so they should win a hit
@@ -658,8 +665,8 @@ export default function TransformCanvas({
     // Not dragging — just update the hover cursor so a draggable item
     // reads as grabbable before you commit to a drag.
     if (drawingShapeId || useAppStore.getState().activeLesson) return;
-    const { matrixValues, animProgress, customVectors, shapes } = useAppStore.getState();
-    const display = computeDisplay(matrixValues, animProgress);
+    const { matrixValues, animFrom, animProgress, customVectors, shapes } = useAppStore.getState();
+    const display = computeDisplay(animFrom, matrixValues, animProgress);
     let hovering = customVectors.some((v) => {
       const [sx, sy] = worldToScreen(...display.multiply([v.x, v.y]), cx, cy, scale);
       return Math.hypot(sx - px, sy - py) < HIT_RADIUS;

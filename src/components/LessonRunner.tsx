@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import katex from 'katex';
 import { useAppStore } from '../store/appStore';
+import DecompositionPlayer from './DecompositionPlayer';
+import { buildDecompositionSequence } from '../math/decompositionSequences';
 
 // Steps a user through the active lesson. Reads activeLesson/activeStepIndex
 // straight from the store and renders nothing when no lesson is running.
@@ -12,11 +14,12 @@ import { useAppStore } from '../store/appStore';
 // big enough shape ended up hidden behind the card). LessonDock now mounts
 // this in its own slot instead — a lesson runs *in* the dock, never on top
 // of the canvas, so the whole canvas stays visible for as long as the
-// lesson is running.
+// lesson is running. Same reasoning is why DecompositionPlayer renders
+// in-flow below rather than as its own floating bottom-center card: that
+// spot is already the equation bar + scrub bar's.
 //
-// Exit lives in NavBar now, not here — the "Lesson in progress" lock badge
-// (top right) is the exit button, rather than a separate control repeating
-// the same action in two places.
+// Exit lives in NavBar now, not here — a dedicated "Exit Lesson" button,
+// rather than a separate control repeating the same action in two places.
 export default function LessonRunner() {
   const activeLesson = useAppStore((s) => s.activeLesson);
   const activeStepIndex = useAppStore((s) => s.activeStepIndex);
@@ -38,6 +41,17 @@ export default function LessonRunner() {
     }
   }, [step]);
 
+  // A decomposition-track step opts into DecompositionPlayer by setting
+  // `decomposition`; buildDecompositionSequence turns that + the step's own
+  // `matrix` into the labeled stop sequence the player animates through.
+  // Memoized on `step` (stable per lesson step, since lesson content is
+  // static data) so this doesn't get recomputed — and DecompositionPlayer's
+  // own reset effect doesn't get spuriously retriggered — on every render.
+  const decompositionSequence = useMemo(
+    () => (step?.decomposition ? buildDecompositionSequence(step.decomposition, step.matrix) : null),
+    [step],
+  );
+
   if (!activeLesson || !step) return null;
 
   const stepNumber = activeStepIndex + 1;
@@ -58,6 +72,14 @@ export default function LessonRunner() {
       </div>
 
       <div ref={katexRef} className={step.katex ? 'py-1 overflow-x-auto' : undefined} />
+
+      {/* Set but not buildable (e.g. an eigen step authored against a
+          rotation matrix) — flag it rather than silently showing nothing. */}
+      {step.decomposition && !decompositionSequence && (
+        <p className="text-warn/80 text-xs">
+          This matrix has no real {step.decomposition.toUpperCase()} decomposition to animate.
+        </p>
+      )}
 
       {/* Step progress dots — a quick at-a-glance sense of how much of the
           lesson is left, and which steps have already been visited. */}
@@ -101,6 +123,15 @@ export default function LessonRunner() {
           Next →
         </button>
       </div>
+
+      {/* Its own Prev/Replay/Next (stepping through the decomposition's
+          stops) reads as distinct from the lesson-step Prev/Next above —
+          `!w-full` overrides DecompositionPlayer's own fixed card width
+          (it's designed to also work as a freestanding floating card
+          elsewhere) so it sits naturally in the dock's column instead. */}
+      {decompositionSequence && (
+        <DecompositionPlayer sequence={decompositionSequence} className="!w-full" />
+      )}
     </div>
   );
 }

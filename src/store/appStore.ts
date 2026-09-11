@@ -49,7 +49,12 @@ export function trianglePresetVertices(): [number, number][] {
 
 interface AppStore {
   matrixValues: Matrix2x2Values;
-  // 0 = identity, 1 = fully transformed (live as user types)
+  // Matrix animProgress=0 corresponds to. Almost always the identity (every
+  // tween in the app animates identity -> matrixValues) except mid-sequence
+  // in DecompositionPlayer, which points this at the previous stop so it can
+  // tween stop-to-stop instead of always snapping back to identity.
+  animFrom: Matrix2x2Values;
+  // 0 = animFrom, 1 = fully transformed (live as user types)
   animProgress: number;
   // incremented each time "Animate" is clicked to re-trigger the tween
   animTrigger: number;
@@ -66,6 +71,12 @@ interface AppStore {
   setAnimProgress: (t: number) => void;
   setIsScrubbing: (scrubbing: boolean) => void;
   triggerAnimation: () => void;
+  // Same as triggerAnimation, but tweens `from` -> `to` instead of always
+  // starting from identity. Lets a caller (DecompositionPlayer) chain several
+  // stop-to-stop tweens through the same GSAP-driven mechanism TransformCanvas
+  // already listens to (animFrom/matrixValues/animProgress/animTrigger),
+  // rather than building a parallel animation system.
+  triggerAnimationFrom: (from: Matrix2x2Values, to: Matrix2x2Values) => void;
   addVector: (x: number, y: number) => void;
   removeVector: (id: string) => void;
   updateVector: (id: string, x: number, y: number) => void;
@@ -91,8 +102,11 @@ interface AppStore {
   exitLesson: () => void;
 }
 
+const IDENTITY_VALUES: Matrix2x2Values = [[1, 0], [0, 1]];
+
 export const useAppStore = create<AppStore>((set, get) => ({
   matrixValues: [[1, 0], [0, 1]],
+  animFrom: IDENTITY_VALUES,
   animProgress: 1,
   animTrigger: 0,
   isScrubbing: false,
@@ -120,10 +134,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   triggerAnimation: () =>
     set((state) => ({
+      // The Animate button always tweens identity -> matrixValues; reset
+      // animFrom here too in case something (e.g. DecompositionPlayer) left
+      // it pointed at a mid-sequence stop.
+      animFrom: IDENTITY_VALUES,
       animProgress: 0,
       animTrigger: state.animTrigger + 1,
       // A fresh Animate click always wins over a stale scrub session (e.g.
       // one where pointerup fired outside the slider).
+      isScrubbing: false,
+    })),
+
+  triggerAnimationFrom: (from, to) =>
+    set((state) => ({
+      animFrom: from,
+      matrixValues: to,
+      animProgress: 0,
+      animTrigger: state.animTrigger + 1,
       isScrubbing: false,
     })),
 
@@ -223,7 +250,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({
       activeLesson: null,
       activeStepIndex: 0,
-      matrixValues: [[1, 0], [0, 1]],
+      matrixValues: IDENTITY_VALUES,
+      // In case a decomposition-track step left this pointed at a mid-
+      // sequence stop (see triggerAnimationFrom / DecompositionPlayer).
+      animFrom: IDENTITY_VALUES,
       customVectors: [],
       shapes: [],
       nextSeq: 0,
@@ -240,6 +270,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
 //
 // Vectors/shapes are fully replaced (not merged) on every step, so a step
 // that omits `vectors`/`shapes` clears whatever the previous step loaded.
+//
+// For a step with `decomposition` set, this still sets matrixValues to the
+// step's (fully transformed) matrix as a sane at-rest default — but
+// LessonRunner mounts a DecompositionPlayer for that step, and its own
+// mount effect immediately takes over via triggerAnimationFrom, resetting
+// the canvas to the identity start of that decomposition's stop sequence.
 function applyLessonStep(store: AppStore, step: LessonStep): void {
   store.setMatrixValues(step.matrix);
 

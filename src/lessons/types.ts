@@ -1,4 +1,5 @@
 import type { Matrix2x2Values } from '../math/Matrix2x2';
+import type { DecompositionKind } from '../math/decompositionSequences';
 import type { ShapeType } from '../store/appStore';
 
 // Curriculum track a lesson belongs to. Mirrors the phases on LearningPage
@@ -42,6 +43,16 @@ export interface LessonStep {
   // "\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}". Rendered by
   // LessonRunner via katex.render() into a container div.
   katex?: string;
+  // When set, this step's canvas visualization is driven by
+  // DecompositionPlayer (src/components/DecompositionPlayer.tsx) stepping
+  // through `matrix`'s svd/eigen/lu/qr decomposition one stop at a time,
+  // instead of the single static application of `matrix` every other step
+  // uses. LessonRunner builds the sequence via decompositionSequences.ts's
+  // buildDecompositionSequence(decomposition, matrix) and renders the
+  // player alongside this step's card when it's set. Leave unset for a
+  // step that's just explaining a matrix, not animating a decomposition of
+  // it — e.g. every beginner/intermediate step today.
+  decomposition?: DecompositionKind;
 }
 
 export interface Lesson {
