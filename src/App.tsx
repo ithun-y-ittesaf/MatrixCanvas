@@ -6,7 +6,7 @@ import './App.css';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#0d0f1a]">
+    <div className="min-h-screen bg-bg">
       <NavBar />
       <Routes>
         <Route path="/"      element={<PlaygroundPage />} />

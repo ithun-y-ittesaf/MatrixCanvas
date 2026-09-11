@@ -1,7 +1,7 @@
 import type { Matrix2x2Values } from '../math/Matrix2x2';
 import { PRESETS } from '../utils/presets';
 
-// Looks a transform up by its MatrixInput dropdown label, so lesson content
+// Looks a transform up by its preset-menu label, so lesson content
 // that uses a "named" preset (rotation/shear/reflection/scale/...) stays in
 // sync with PRESETS instead of re-typing the same numbers. Shared across
 // track files (beginnerTrack.ts, intermediateTrack.ts, ...) rather than each

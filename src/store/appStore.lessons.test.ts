@@ -5,7 +5,7 @@ import { TEST_LESSON_IDENTITY_SCALE, TEST_LESSON_REFLECT_SHAPE } from '../lesson
 // Proves the lesson engine plumbing end-to-end: driving it through
 // startLesson/nextStep/prevStep/exitLesson lands on the exact same
 // matrixValues/customVectors/shapes fields that the Playground page's
-// TransformCanvas/MatrixInput/VectorPanel/ShapePanel already read, so a
+// TransformCanvas/CanvasToolbar/ExpressionSidebar already read, so a
 // lesson step really does "programmatically control the canvas state"
 // (FR-7) with zero lesson-specific UI needed to prove it.
 

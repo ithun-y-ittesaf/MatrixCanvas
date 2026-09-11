@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
+// Global — every panel that renders KaTeX (LessonRunner, ExpressionSidebar,
+// EquationPanel) shares this one stylesheet rather than each importing it.
+import 'katex/dist/katex.min.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

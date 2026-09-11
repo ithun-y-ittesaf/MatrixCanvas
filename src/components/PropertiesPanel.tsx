@@ -1,5 +1,6 @@
 import { useAppStore } from '../store/appStore';
 import { Matrix2x2 } from '../math/Matrix2x2';
+import { fmt as fmtBase } from '../utils/format';
 
 // NFR-5 requires displayed numbers to be accurate to at least 6 decimal
 // places. toFixed(4) was truncating below that; round/display to 6 instead
@@ -7,7 +8,7 @@ import { Matrix2x2 } from '../math/Matrix2x2';
 const DISPLAY_DECIMALS = 6;
 
 function fmt(n: number): string {
-  return parseFloat(n.toFixed(DISPLAY_DECIMALS)).toString();
+  return fmtBase(n, DISPLAY_DECIMALS);
 }
 
 // One-line plain-English read of what the singular values imply about the
@@ -26,7 +27,7 @@ function singularValueNote([s1, s2]: [number, number]): string | null {
 
 function Dot({ ok }: { ok: boolean }) {
   return (
-    <span className={`font-semibold ${ok ? 'text-emerald-400' : 'text-red-400'}`}>
+    <span className={`font-semibold ${ok ? 'text-success' : 'text-danger'}`}>
       {ok ? 'yes' : 'no'}
     </span>
   );
@@ -40,34 +41,28 @@ export default function PropertiesPanel() {
   const singularVals = m.singularValues();
   const singularNote = singularValueNote(singularVals);
 
+  // Chrome-less — CanvasToolbar supplies the popover card (border/bg/shadow)
+  // this renders inside.
   return (
-    <div
-      className="rounded-xl border border-white/10 px-4 py-3 text-xs font-mono
-                 bg-black/50 backdrop-blur-md flex flex-col gap-1.5"
-      style={{ minWidth: 190 }}
-    >
-      <p className="text-slate-500 uppercase tracking-widest text-[10px] mb-0.5 font-sans">
-        Properties
-      </p>
-
+    <div className="text-xs font-mono flex flex-col gap-1.5" style={{ minWidth: 190 }}>
       <div className="flex justify-between gap-6">
-        <span className="text-slate-400">det</span>
-        <span className="text-white">{fmt(det)}</span>
+        <span className="text-ink-dim">det</span>
+        <span className="text-ink">{fmt(det)}</span>
       </div>
 
       <div className="flex justify-between gap-6">
-        <span className="text-slate-400">trace</span>
-        <span className="text-white">{fmt(m.trace())}</span>
+        <span className="text-ink-dim">trace</span>
+        <span className="text-ink">{fmt(m.trace())}</span>
       </div>
 
       <div className="flex justify-between gap-6">
-        <span className="text-slate-400">rank</span>
-        <span className="text-white">{m.rank()}</span>
+        <span className="text-ink-dim">rank</span>
+        <span className="text-ink">{m.rank()}</span>
       </div>
 
       <div className="flex justify-between gap-6">
-        <span className="text-slate-400">eigenvalues</span>
-        <span className="text-white">
+        <span className="text-ink-dim">eigenvalues</span>
+        <span className="text-ink">
           {eigenvals.type === 'real'
             ? `${fmt(eigenvals.values[0])}, ${fmt(eigenvals.values[1])}`
             : `${fmt(eigenvals.values[0].re)} ± ${fmt(Math.abs(eigenvals.values[0].im))}i`}
@@ -75,34 +70,34 @@ export default function PropertiesPanel() {
       </div>
 
       <div className="flex justify-between gap-6">
-        <span className="text-slate-400">singular values</span>
-        <span className="text-white">
+        <span className="text-ink-dim">singular values</span>
+        <span className="text-ink">
           {fmt(singularVals[0])}, {fmt(singularVals[1])}
         </span>
       </div>
 
-      <div className="border-t border-white/5 mt-1 pt-1.5 flex flex-col gap-1.5">
+      <div className="border-t border-line mt-1 pt-1.5 flex flex-col gap-1.5">
         <div className="flex justify-between gap-6">
-          <span className="text-slate-400">invertible</span>
+          <span className="text-ink-dim">invertible</span>
           <Dot ok={m.isInvertible()} />
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-slate-400">orthogonal</span>
+          <span className="text-ink-dim">orthogonal</span>
           <Dot ok={m.isOrthogonal()} />
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-slate-400">symmetric</span>
+          <span className="text-ink-dim">symmetric</span>
           <Dot ok={m.isSymmetric()} />
         </div>
       </div>
 
       {(det < 0 || singularNote) && (
-        <div className="border-t border-white/5 mt-0.5 pt-1.5 flex flex-col gap-1">
+        <div className="border-t border-line mt-0.5 pt-1.5 flex flex-col gap-1">
           {det < 0 && (
-            <p className="text-amber-500/80 text-[10px] font-sans">Orientation reversed</p>
+            <p className="text-warn/80 text-[10px] font-sans">Orientation reversed</p>
           )}
           {singularNote && (
-            <p className="text-amber-500/80 text-[10px] font-sans">{singularNote}</p>
+            <p className="text-warn/80 text-[10px] font-sans">{singularNote}</p>
           )}
         </div>
       )}

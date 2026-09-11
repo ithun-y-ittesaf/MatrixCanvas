@@ -1,20 +1,27 @@
 import { useEffect, useRef } from 'react';
 import katex from 'katex';
-import 'katex/dist/katex.min.css';
 import { useAppStore } from '../store/appStore';
 
-// Floating panel that steps a user through the active lesson. Reads
-// activeLesson/activeStepIndex straight from the store and renders nothing
-// when no lesson is running, so it can just be mounted alongside the rest of
-// PlaygroundPage's panels unconditionally — same as how a lesson step itself
-// only *pushes into* matrixValues/customVectors/shapes rather than replacing
-// them, TransformCanvas and friends have no idea this panel exists.
+// Steps a user through the active lesson. Reads activeLesson/activeStepIndex
+// straight from the store and renders nothing when no lesson is running.
+//
+// Content-only — no positioning or card chrome of its own. It used to float
+// as its own top-center modal over the canvas, but that put it in direct
+// competition for screen space with the very thing it's explaining (a
+// lesson step's vectors/shapes are drawn centered on the canvas too, so a
+// big enough shape ended up hidden behind the card). LessonDock now mounts
+// this in its own slot instead — a lesson runs *in* the dock, never on top
+// of the canvas, so the whole canvas stays visible for as long as the
+// lesson is running.
+//
+// Exit lives in NavBar now, not here — the "Lesson in progress" lock badge
+// (top right) is the exit button, rather than a separate control repeating
+// the same action in two places.
 export default function LessonRunner() {
   const activeLesson = useAppStore((s) => s.activeLesson);
   const activeStepIndex = useAppStore((s) => s.activeStepIndex);
   const nextStep = useAppStore((s) => s.nextStep);
   const prevStep = useAppStore((s) => s.prevStep);
-  const exitLesson = useAppStore((s) => s.exitLesson);
 
   const step = activeLesson?.steps[activeStepIndex] ?? null;
 
@@ -39,50 +46,55 @@ export default function LessonRunner() {
   const isLastStep = stepNumber === totalSteps;
 
   return (
-    <div
-      className="absolute top-6 left-1/2 -translate-x-1/2 w-[92vw] max-w-[400px] rounded-xl
-                 border border-white/10 px-5 py-4 bg-black/50 backdrop-blur-md shadow-2xl
-                 flex flex-col gap-3 font-sans"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-slate-500 uppercase tracking-widest text-[10px]">
-          {activeLesson.title}
-        </p>
-        <button
-          onClick={exitLesson}
-          className="text-slate-500 hover:text-red-400 text-xs transition-colors shrink-0"
-        >
-          Exit ✕
-        </button>
-      </div>
+    <div className="flex flex-col gap-3 font-sans p-3">
+      <p className="text-ink-faint uppercase tracking-widest text-[10px] truncate">
+        {activeLesson.title}
+      </p>
 
       <div>
-        <h2 className="text-white font-semibold text-base">{step.title}</h2>
+        <h2 className="text-ink font-semibold text-base">{step.title}</h2>
         {/* explanation is plain text (see LessonStep in lessons/types.ts) */}
-        <p className="text-slate-300 text-sm mt-1 whitespace-pre-wrap">{step.explanation}</p>
+        <p className="text-ink-dim text-sm mt-1 whitespace-pre-wrap">{step.explanation}</p>
       </div>
 
       <div ref={katexRef} className={step.katex ? 'py-1 overflow-x-auto' : undefined} />
+
+      {/* Step progress dots — a quick at-a-glance sense of how much of the
+          lesson is left, and which steps have already been visited. */}
+      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+        {activeLesson.steps.map((s, i) => (
+          <span
+            key={s.id}
+            className={`h-1.5 rounded-full transition-all ${
+              i === activeStepIndex
+                ? 'w-4 bg-accent'
+                : i < activeStepIndex
+                  ? 'w-1.5 bg-accent/40'
+                  : 'w-1.5 bg-line-strong'
+            }`}
+          />
+        ))}
+      </div>
 
       <div className="flex items-center justify-between gap-2">
         <button
           onClick={prevStep}
           disabled={isFirstStep}
-          className="px-3 py-1.5 rounded-lg border border-white/10 text-slate-400 text-xs
-                     hover:text-white hover:border-white/20 transition-colors
+          className="px-3 py-1.5 rounded-lg border border-line text-ink-dim text-xs
+                     hover:text-ink hover:border-line-strong transition-colors
                      disabled:opacity-30 disabled:pointer-events-none"
         >
           ← Prev
         </button>
 
-        <span className="text-slate-500 text-xs shrink-0 whitespace-nowrap">
-          Step {stepNumber} of {totalSteps}
+        <span className="text-ink-faint text-xs shrink-0 whitespace-nowrap">
+          {stepNumber} / {totalSteps}
         </span>
 
         <button
           onClick={nextStep}
           disabled={isLastStep}
-          className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-95
+          className="px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-strong active:scale-95
                      text-white text-xs font-semibold transition-all
                      disabled:opacity-30 disabled:pointer-events-none disabled:active:scale-100"
         >

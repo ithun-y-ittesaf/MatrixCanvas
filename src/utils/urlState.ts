@@ -18,7 +18,7 @@ const MAX_VERTICES_PER_SHAPE = 200;
 
 function numToStr(n: number): string {
   if (!Number.isFinite(n)) return '0';
-  // Round to 6 decimals and trim trailing zeros, same convention MatrixInput
+  // Round to 6 decimals and trim trailing zeros, same convention MatrixBracket
   // uses for its display values.
   return parseFloat(n.toFixed(NUM_DECIMALS)).toString();
 }

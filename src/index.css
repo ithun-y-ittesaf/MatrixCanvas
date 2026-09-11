@@ -1,4 +1,40 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
 @import "tailwindcss";
+
+/* Design tokens. Tailwind v4 turns each --color-* below into matching
+   utilities (bg-surface, text-ink-dim, border-line/40, ...) and --font-sans
+   into the `font-sans` utility — see src/theme.ts for the handful of colors
+   (basis vectors, vector-cycling palette) that also need to exist as plain
+   JS constants for <canvas> drawing. Keep the two in sync by hand. */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-bg: #0a0b12;
+  --color-surface: #14151f;
+  --color-surface-raised: #1b1d2b;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-strong: rgba(255, 255, 255, 0.16);
+
+  --color-ink: #eef0f8;
+  --color-ink-dim: #9497ac;
+  --color-ink-faint: #5b5f74;
+
+  --color-accent: #6366f1;
+  --color-accent-strong: #818cf8;
+  --color-accent-soft: rgba(99, 102, 241, 0.16);
+
+  --color-danger: #fb7185;
+  --color-success: #4ade80;
+  --color-warn: #fbbf24;
+
+  /* î / ĵ — mirrors COLOR_BASIS_X / COLOR_BASIS_Y in src/theme.ts */
+  --color-basis-x: #f87171;
+  --color-basis-y: #60a5fa;
+}
 
 @layer base {
   * {
@@ -8,10 +44,11 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background-color: #0d0f1a;
-    color: #e2e8f0;
-    font-family: Inter, system-ui, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   input[type='number']::-webkit-inner-spin-button,
@@ -23,4 +60,54 @@
   input[type='number'] {
     -moz-appearance: textfield;
   }
+
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+
+  /* Thin, unobtrusive scrollbars for the panels' overflow lists — the
+     default OS scrollbar reads jarring against the glassy dark panels. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* Small pop-in for transient confirmations (e.g. "Link copied!"). */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+.toast-pop {
+  animation: pop-in 0.16s ease-out;
+}
+
+/* Transparent inputs overlaid on a real KaTeX render (MatrixBracket,
+   VectorBracket) — clicking a cell selects its text (so typing replaces
+   it outright, Desmos/GeoGebra-style) but nothing should visibly show for
+   that beyond the blinking caret: no highlight box, no background, and
+   critically no *text* color either — browsers render selected text in a
+   color of their own by default regardless of the element's own `color`,
+   so without this override, selecting the cell's value on focus painted
+   its digit a second time (the real one, `color: transparent`, sitting a
+   few px off from the actual KaTeX glyph beneath it) — a ghost double
+   digit exactly where you'd just clicked. */
+.katex-overlay-input::selection {
+  background: transparent;
+  color: transparent;
 }
