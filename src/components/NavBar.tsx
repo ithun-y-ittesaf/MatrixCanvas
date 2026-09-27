@@ -4,6 +4,7 @@ import { useAppStore } from '../store/appStore';
 const LINKS = [
   { to: '/', label: 'Playground' },
   { to: '/learn', label: 'Learn' },
+  { to: '/3d', label: '3D' },
 ];
 
 // Small 2x2 dot glyph standing in for a matrix — keeps the brand mark on-theme
