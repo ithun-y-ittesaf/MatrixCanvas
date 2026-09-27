@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Matrix2x2Values } from '../math/Matrix2x2';
+import type { Matrix3x3Values } from '../math/Matrix3x3';
 import type { Lesson, LessonStep } from '../lessons/types';
 import { VECTOR_COLORS } from '../theme';
 
@@ -49,6 +50,10 @@ export function trianglePresetVertices(): [number, number][] {
 
 interface AppStore {
   matrixValues: Matrix2x2Values;
+  // The 3D playground's own matrix, kept fully separate from the 2D
+  // matrixValues above so the two playgrounds never interfere with each
+  // other's state.
+  matrixValues3d: Matrix3x3Values;
   // Matrix animProgress=0 corresponds to. Almost always the identity (every
   // tween in the app animates identity -> matrixValues) except mid-sequence
   // in DecompositionPlayer, which points this at the previous stop so it can
@@ -68,6 +73,8 @@ interface AppStore {
 
   setMatrixValue: (row: 0 | 1, col: 0 | 1, value: number) => void;
   setMatrixValues: (values: Matrix2x2Values) => void;
+  setMatrixValue3d: (row: 0 | 1 | 2, col: 0 | 1 | 2, value: number) => void;
+  setMatrixValues3d: (values: Matrix3x3Values) => void;
   setAnimProgress: (t: number) => void;
   setIsScrubbing: (scrubbing: boolean) => void;
   triggerAnimation: () => void;
@@ -106,6 +113,7 @@ const IDENTITY_VALUES: Matrix2x2Values = [[1, 0], [0, 1]];
 
 export const useAppStore = create<AppStore>((set, get) => ({
   matrixValues: [[1, 0], [0, 1]],
+  matrixValues3d: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
   animFrom: IDENTITY_VALUES,
   animProgress: 1,
   animTrigger: 0,
@@ -127,6 +135,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }),
 
   setMatrixValues: (values) => set({ matrixValues: values }),
+
+  setMatrixValue3d: (row, col, value) =>
+    set((state) => {
+      const next: Matrix3x3Values = [
+        [...state.matrixValues3d[0]] as [number, number, number],
+        [...state.matrixValues3d[1]] as [number, number, number],
+        [...state.matrixValues3d[2]] as [number, number, number],
+      ];
+      next[row][col] = value;
+      return { matrixValues3d: next };
+    }),
+
+  setMatrixValues3d: (values) => set({ matrixValues3d: values }),
 
   setAnimProgress: (t) => set({ animProgress: t }),
 
