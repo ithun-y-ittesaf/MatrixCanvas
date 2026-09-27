@@ -440,12 +440,6 @@ The learning system then builds from this geometric intuition toward more abstra
 
 ---
 
-## 📄 License
-
-No license file is currently specified in the repository. If this project is intended to be distributed or reused publicly, consider adding an appropriate license to the repository.
-
----
-
 ## 🔗 Repository
 
 [MatrixCanvas on GitHub](https://github.com/ithun-y-ittesaf/MatrixCanvas)
