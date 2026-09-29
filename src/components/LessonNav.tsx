@@ -1,5 +1,7 @@
 import { useAppStore } from '../store/appStore';
 import { ALL_LESSONS } from '../lessons';
+import { ALL_LESSONS_3D } from '../lessons3d';
+import { isLesson3D, type AnyLesson } from '../lessons/types';
 
 // Jumps between whole lessons (not steps within one — LessonRunner's own
 // Prev/Next already do that) — the next/previous entry in the curriculum's
@@ -10,9 +12,11 @@ export default function LessonNav() {
 
   if (!activeLesson) return null;
 
-  const index = ALL_LESSONS.findIndex((l) => l.id === activeLesson.id);
-  const prevLesson = index > 0 ? ALL_LESSONS[index - 1] : null;
-  const nextLesson = index >= 0 && index < ALL_LESSONS.length - 1 ? ALL_LESSONS[index + 1] : null;
+  // Stays within the active lesson's own dimension.
+  const curriculum: AnyLesson[] = isLesson3D(activeLesson) ? ALL_LESSONS_3D : ALL_LESSONS;
+  const index = curriculum.findIndex((l) => l.id === activeLesson.id);
+  const prevLesson = index > 0 ? curriculum[index - 1] : null;
+  const nextLesson = index >= 0 && index < curriculum.length - 1 ? curriculum[index + 1] : null;
 
   return (
     <div className="flex items-center gap-2 font-sans">

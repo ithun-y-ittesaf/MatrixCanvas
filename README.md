@@ -8,6 +8,15 @@ It combines a coordinate-plane playground with guided lessons so that concepts s
 
 ## ✨ Features
 
+### 2D and 3D Modes
+
+A **2D | 3D** toggle in the navigation bar switches the whole app between the plane and space, with the same UI in both:
+
+* A 3×3 matrix editor, 3D presets (axis rotations, shears, plane reflections, projections), draggable 3D vectors, and cube / pyramid / sphere shapes with a live volume readout.
+* Animate and scrub, a properties panel (determinant as volume, rank, eigenvalues, singular values), and shareable links (`?mode=3d`).
+* Optional overlays: the unit sphere and its ellipsoid image, singular axes, eigenvector lines, and null space / column space drawn as lines or planes.
+* A full 3D version of every lesson in all three tracks, including SVD shown as sphere → rotation → stretch → rotation. Pick the dimension with the toggle, then open **Learn**.
+
 ### Interactive Transformation Playground
 
 The main Playground provides a 2D coordinate canvas where you can:
@@ -204,6 +213,7 @@ MatrixCanvas/
 ├── src/
 │   ├── components/
 │   ├── lessons/
+│   ├── lessons3d/
 │   ├── math/
 │   ├── pages/
 │   ├── store/
@@ -264,6 +274,10 @@ The main store keeps track of:
 * Lesson progress
 
 It also provides actions for adding, removing, and modifying vectors and shapes and for controlling lessons.
+
+#### `src/lessons3d/`
+
+3D versions of every lesson (`ALL_LESSONS_3D`), mirroring the 2D tracks. Tests pin every number the lesson text states.
 
 #### `src/lessons/`
 

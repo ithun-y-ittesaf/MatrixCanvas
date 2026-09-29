@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import AddMenu from '../components/AddMenu';
 import AnimateScrubBar from '../components/AnimateScrubBar';
@@ -8,9 +8,15 @@ import EquationPanel from '../components/EquationPanel';
 import LessonDock from '../components/LessonDock';
 import LessonNav from '../components/LessonNav';
 import TransformCanvas from '../components/TransformCanvas';
+import TransformCanvas3D from '../components/TransformCanvas3D';
 import VectorPopups from '../components/VectorPopups';
 import { useAppStore } from '../store/appStore';
-import { buildSearchParams, hydrateStoreFromSearchParams } from '../utils/urlState';
+import {
+  buildSearchParams,
+  buildSearchParams3d,
+  hydrateStoreFromSearchParams,
+  modeFromSearchParams,
+} from '../utils/urlState';
 
 const URL_SYNC_DEBOUNCE_MS = 400;
 
@@ -59,9 +65,26 @@ export default function PlaygroundPage() {
     hydrateStoreFromSearchParams(searchParams);
   }
 
+  const mode = useAppStore((s) => s.mode);
+  const setMode = useAppStore((s) => s.setMode);
+
+  // Applies the link's `mode=` (e.g. the /3d redirect, or a shared 3D link
+  // opened in-app) before paint. A layout effect rather than part of the
+  // render-body hydration above - see modeFromSearchParams.
+  const linkMode = modeFromSearchParams(searchParams);
+  useLayoutEffect(() => {
+    if (linkMode) setMode(linkMode);
+    // Only on arrival: later URL rewrites (the debounced sync) always agree
+    // with the current mode already.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const matrixValues = useAppStore((s) => s.matrixValues);
   const customVectors = useAppStore((s) => s.customVectors);
   const shapes = useAppStore((s) => s.shapes);
+  const matrixValues3d = useAppStore((s) => s.matrixValues3d);
+  const customVectors3d = useAppStore((s) => s.customVectors3d);
+  const shapes3d = useAppStore((s) => s.shapes3d);
 
   // Mirror matrix/vectors/shapes into the URL as a shareable link, debounced
   // so typing in the matrix bracket or dragging out a polygon doesn't spam
@@ -76,10 +99,24 @@ export default function PlaygroundPage() {
       return;
     }
     const timeout = setTimeout(() => {
-      setSearchParams(buildSearchParams({ matrixValues, customVectors, shapes }), { replace: true });
+      // Only the active dimension's state goes in the link; 3D links carry
+      // `mode=3d` so they reopen in 3D.
+      setSearchParams(
+        mode === '3d'
+          ? buildSearchParams3d({ matrixValues3d, customVectors3d, shapes3d })
+          : buildSearchParams({ matrixValues, customVectors, shapes }),
+        { replace: true },
+      );
     }, URL_SYNC_DEBOUNCE_MS);
     return () => clearTimeout(timeout);
-  }, [matrixValues, customVectors, shapes, setSearchParams]);
+  }, [
+    mode, matrixValues, customVectors, shapes,
+    matrixValues3d, customVectors3d, shapes3d, setSearchParams,
+  ]);
+
+  // The zoom readout belongs to whichever canvas is showing; reset it when
+  // switching so a stale percentage from the other one doesn't linger.
+  useEffect(() => setZoomPercent(100), [mode]);
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
@@ -89,11 +126,15 @@ export default function PlaygroundPage() {
       {/* Canvas pane — everything below is positioned relative to this, not
           the full viewport, so it stays clear of the dock. */}
       <div className="relative flex-1 min-w-0">
-        <TransformCanvas
-          drawingShapeId={drawingShapeId}
-          onDrawingShapeIdChange={setDrawingShapeId}
-          onZoomChange={setZoomPercent}
-        />
+        {mode === '3d' ? (
+          <TransformCanvas3D onZoomChange={setZoomPercent} />
+        ) : (
+          <TransformCanvas
+            drawingShapeId={drawingShapeId}
+            onDrawingShapeIdChange={setDrawingShapeId}
+            onZoomChange={setZoomPercent}
+          />
+        )}
 
         {/* Top-left cluster: legend + add menu, zoom readout, then each
             vector's own floating bracket popup underneath. */}

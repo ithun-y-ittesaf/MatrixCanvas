@@ -125,3 +125,43 @@ export function CloseIcon({ className, style }: IconProps) {
     </svg>
   );
 }
+
+export function CubeIcon({ className, style }: IconProps) {
+  return (
+    <svg className={className} style={style} {...base}>
+      <path d="M12 3 L20 7.5 V16.5 L12 21 L4 16.5 V7.5 Z" />
+      <path d="M4 7.5 L12 12 L20 7.5" />
+      <line x1="12" y1="12" x2="12" y2="21" />
+    </svg>
+  );
+}
+
+export function PyramidIcon({ className, style }: IconProps) {
+  return (
+    <svg className={className} style={style} {...base}>
+      <path d="M12 3 L21 18 L12 21 L3 18 Z" />
+      <path d="M12 3 L12 21" />
+      <path d="M3 18 L21 18" strokeDasharray="2 2.5" />
+    </svg>
+  );
+}
+
+export function SphereIcon({ className, style }: IconProps) {
+  return (
+    <svg className={className} style={style} {...base}>
+      <circle cx="12" cy="12" r="8.5" />
+      <ellipse cx="12" cy="12" rx="8.5" ry="3.2" />
+      <path d="M12 3.5 C9 7 9 17 12 20.5 M12 3.5 C15 7 15 17 12 20.5" />
+    </svg>
+  );
+}
+
+export function LayersIcon({ className, style }: IconProps) {
+  return (
+    <svg className={className} style={style} {...base}>
+      <polygon points="12 3 21 8 12 13 3 8" />
+      <polyline points="3 12.5 12 17.5 21 12.5" />
+      <polyline points="3 17 12 22 21 17" />
+    </svg>
+  );
+}

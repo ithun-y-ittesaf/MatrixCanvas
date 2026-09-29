@@ -1,6 +1,7 @@
 import type { Matrix2x2Values } from '../math/Matrix2x2';
+import type { Matrix3x3Values } from '../math/Matrix3x3';
 import type { DecompositionKind } from '../math/decompositionSequences';
-import type { ShapeType } from '../store/appStore';
+import type { Overlay3d, ShapeType, ShapeType3d } from '../store/appStore';
 
 // Curriculum track a lesson belongs to. Mirrors the phases on LearningPage
 // (Beginner/Intermediate/Decompositions) minus "Advanced", which the
@@ -59,5 +60,57 @@ export interface Lesson {
   id: string;
   track: TrackType;
   title: string;
+  // Omitted on 2D lessons (they predate 3D mode); `isLesson3D` below is the
+  // canonical discriminator.
+  dimension?: '2d';
   steps: LessonStep[];
+}
+
+// ---------------------------------------------------------------------------
+// 3D lessons - the same shape as 2D, with 3x3 matrices, z components, 3D shapes
+// and optional geometric overlays computed from the step's matrix.
+// ---------------------------------------------------------------------------
+
+export interface LessonVector3D {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface LessonShape3D {
+  type: ShapeType3d;
+  // cube: 8 corners in bit order (index = x + 2y + 4z); pyramid: 4 base
+  // corners then the apex; sphere: [center].
+  vertices: [number, number, number][];
+  radius?: number;
+}
+
+export interface LessonStep3D {
+  id: string;
+  title: string;
+  explanation: string;
+  matrix: Matrix3x3Values;
+  vectors?: LessonVector3D[];
+  shapes?: LessonShape3D[];
+  katex?: string;
+  decomposition?: DecompositionKind;
+  // Geometric overlays the 3D canvas should draw for this step (eigenvector
+  // lines, null-space line/plane, column-space plane, the unit sphere and its
+  // ellipsoid image, ...). Computed from `matrix` by the canvas.
+  overlays?: Overlay3d[];
+}
+
+export interface Lesson3D {
+  id: string;
+  track: TrackType;
+  title: string;
+  dimension: '3d';
+  steps: LessonStep3D[];
+}
+
+export type AnyLesson = Lesson | Lesson3D;
+export type AnyLessonStep = LessonStep | LessonStep3D;
+
+export function isLesson3D(lesson: AnyLesson): lesson is Lesson3D {
+  return lesson.dimension === '3d';
 }

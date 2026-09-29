@@ -3,9 +3,12 @@ import {
   useAppStore,
   rectanglePresetVertices,
   trianglePresetVertices,
+  cubePresetVertices,
+  pyramidPresetVertices,
 } from '../store/appStore';
 import {
   PlusIcon, VectorIcon, RectangleIcon, TriangleIcon, PolygonIcon,
+  CubeIcon, PyramidIcon, SphereIcon,
 } from './icons';
 
 interface AddMenuProps {
@@ -20,9 +23,13 @@ interface AddMenuProps {
 // persistent sidebar. Adding a vector opens its own small floating popup
 // (VectorPopups); adding a shape drops it straight onto the canvas.
 export default function AddMenu({ drawingShapeId, onDrawingShapeIdChange, onVectorAdded }: AddMenuProps) {
+  const mode = useAppStore((s) => s.mode);
   const addVector = useAppStore((s) => s.addVector);
   const addShape = useAppStore((s) => s.addShape);
+  const addVector3d = useAppStore((s) => s.addVector3d);
+  const addShape3d = useAppStore((s) => s.addShape3d);
   const [open, setOpen] = useState(false);
+  const is3d = mode === '3d';
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,9 +44,27 @@ export default function AddMenu({ drawingShapeId, onDrawingShapeIdChange, onVect
     // The zero vector, not (1, 1) — geometrically "nothing yet" (no arrow
     // is even drawn for it — see drawArrow's length guard), matching the
     // blank inputs its popup starts with until the user types real values.
-    addVector(0, 0);
-    const latest = useAppStore.getState().customVectors;
-    onVectorAdded(latest[latest.length - 1].id);
+    if (is3d) {
+      addVector3d(0, 0, 0);
+      const latest = useAppStore.getState().customVectors3d;
+      onVectorAdded(latest[latest.length - 1].id);
+    } else {
+      addVector(0, 0);
+      const latest = useAppStore.getState().customVectors;
+      onVectorAdded(latest[latest.length - 1].id);
+    }
+    setOpen(false);
+  };
+  const handleAddCube = () => {
+    addShape3d('cube', cubePresetVertices());
+    setOpen(false);
+  };
+  const handleAddPyramid = () => {
+    addShape3d('pyramid', pyramidPresetVertices());
+    setOpen(false);
+  };
+  const handleAddSphere = () => {
+    addShape3d('sphere', [[0, 0, 0]], 1);
     setOpen(false);
   };
   const handleAddRectangle = () => {
@@ -85,28 +110,56 @@ export default function AddMenu({ drawingShapeId, onDrawingShapeIdChange, onVect
         <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-widest text-ink-faint">
           Add Shape
         </p>
-        <button
-          onClick={handleAddRectangle}
-          className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors"
-        >
-          <RectangleIcon className="w-4 h-4 shrink-0" />
-          Rectangle
-        </button>
-        <button
-          onClick={handleAddTriangle}
-          className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors"
-        >
-          <TriangleIcon className="w-4 h-4 shrink-0" />
-          Triangle
-        </button>
-        <button
-          onClick={handleStartDrawing}
-          disabled={!!drawingShapeId}
-          className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 mb-1 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors disabled:opacity-40 disabled:pointer-events-none"
-        >
-          <PolygonIcon className="w-4 h-4 shrink-0" />
-          Polygon
-        </button>
+        {is3d ? (
+          <>
+            <button
+              onClick={handleAddCube}
+              className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors"
+            >
+              <CubeIcon className="w-4 h-4 shrink-0" />
+              Cube
+            </button>
+            <button
+              onClick={handleAddPyramid}
+              className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors"
+            >
+              <PyramidIcon className="w-4 h-4 shrink-0" />
+              Pyramid
+            </button>
+            <button
+              onClick={handleAddSphere}
+              className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 mb-1 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors"
+            >
+              <SphereIcon className="w-4 h-4 shrink-0" />
+              Sphere
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleAddRectangle}
+              className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors"
+            >
+              <RectangleIcon className="w-4 h-4 shrink-0" />
+              Rectangle
+            </button>
+            <button
+              onClick={handleAddTriangle}
+              className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors"
+            >
+              <TriangleIcon className="w-4 h-4 shrink-0" />
+              Triangle
+            </button>
+            <button
+              onClick={handleStartDrawing}
+              disabled={!!drawingShapeId}
+              className="w-full flex items-center gap-2 pl-6 pr-3 py-1.5 mb-1 text-sm text-ink-dim hover:bg-white/5 hover:text-ink transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+              <PolygonIcon className="w-4 h-4 shrink-0" />
+              Polygon
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

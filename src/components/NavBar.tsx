@@ -1,10 +1,14 @@
 import { NavLink } from 'react-router-dom';
-import { useAppStore } from '../store/appStore';
+import { useAppStore, type Mode } from '../store/appStore';
 
 const LINKS = [
   { to: '/', label: 'Playground' },
   { to: '/learn', label: 'Learn' },
-  { to: '/3d', label: '3D' },
+];
+
+const MODES: { value: Mode; label: string }[] = [
+  { value: '2d', label: '2D' },
+  { value: '3d', label: '3D' },
 ];
 
 // Small 2x2 dot glyph standing in for a matrix — keeps the brand mark on-theme
@@ -22,10 +26,12 @@ function BrandMark() {
 export default function NavBar() {
   const activeLesson = useAppStore((s) => s.activeLesson);
   const exitLesson = useAppStore((s) => s.exitLesson);
+  const mode = useAppStore((s) => s.mode);
+  const setMode = useAppStore((s) => s.setMode);
   const isLocked = activeLesson !== null;
 
   return (
-    <nav className="flex items-center gap-6 px-6 h-14 border-b border-line bg-surface/80 backdrop-blur-md relative z-20">
+    <nav className="flex items-center gap-2 sm:gap-6 px-3 sm:px-6 h-14 border-b border-line bg-surface/80 backdrop-blur-md relative z-20">
       <NavLink
         to="/"
         onClick={(e) => { if (isLocked) e.preventDefault(); }}
@@ -35,10 +41,10 @@ export default function NavBar() {
         aria-disabled={isLocked}
       >
         <BrandMark />
-        <span className="text-ink">Matrix<span className="text-accent">Canvas</span></span>
+        <span className="text-ink hidden sm:inline">Matrix<span className="text-accent">Canvas</span></span>
       </NavLink>
 
-      <div className="flex gap-1 ml-2">
+      <div className="flex gap-0.5 sm:gap-1 sm:ml-2">
         {LINKS.map(({ to, label }) => (
           <NavLink
             key={to}
@@ -47,7 +53,7 @@ export default function NavBar() {
             onClick={(e) => { if (isLocked) e.preventDefault(); }}
             aria-disabled={isLocked}
             className={({ isActive }) =>
-              `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              `px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 isLocked
                   ? 'text-ink-faint cursor-not-allowed'
                   : isActive
@@ -58,6 +64,31 @@ export default function NavBar() {
           >
             {label}
           </NavLink>
+        ))}
+      </div>
+
+      {/* 2D | 3D - switches the Playground canvas and which lessons Learn
+          lists. Locked mid-lesson like the nav links: a lesson belongs to one
+          dimension, so leave it (Exit Lesson) before switching. */}
+      <div
+        role="group"
+        aria-label="Dimension"
+        className={`flex p-0.5 rounded-lg border border-line bg-white/[0.03] ${isLocked ? 'opacity-50' : ''}`}
+      >
+        {MODES.map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => setMode(value)}
+            disabled={isLocked}
+            aria-pressed={mode === value}
+            className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
+              mode === value
+                ? 'bg-accent text-white'
+                : 'text-ink-dim hover:text-ink disabled:hover:text-ink-dim'
+            } ${isLocked ? 'cursor-not-allowed' : ''}`}
+          >
+            {label}
+          </button>
         ))}
       </div>
 

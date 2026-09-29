@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import katex from 'katex';
+import type { Matrix2x2Values } from '../math/Matrix2x2';
+import type { Matrix3x3Values } from '../math/Matrix3x3';
 import { useAppStore } from '../store/appStore';
 import DecompositionPlayer from './DecompositionPlayer';
 import { buildDecompositionSequence } from '../math/decompositionSequences';
+import { buildDecompositionSequence3d } from '../math/decompositionSequences3d';
+import { isLesson3D } from '../lessons/types';
 
 // Steps a user through the active lesson. Reads activeLesson/activeStepIndex
 // straight from the store and renders nothing when no lesson is running.
@@ -47,10 +51,13 @@ export default function LessonRunner() {
   // Memoized on `step` (stable per lesson step, since lesson content is
   // static data) so this doesn't get recomputed — and DecompositionPlayer's
   // own reset effect doesn't get spuriously retriggered — on every render.
-  const decompositionSequence = useMemo(
-    () => (step?.decomposition ? buildDecompositionSequence(step.decomposition, step.matrix) : null),
-    [step],
-  );
+  // Picks the 2D or 3D builder from the step's own matrix size.
+  const decompositionSequence = useMemo(() => {
+    if (!step?.decomposition) return null;
+    return isLesson3D(activeLesson!)
+      ? buildDecompositionSequence3d(step.decomposition, step.matrix as Matrix3x3Values)
+      : buildDecompositionSequence(step.decomposition, step.matrix as Matrix2x2Values);
+  }, [step, activeLesson]);
 
   if (!activeLesson || !step) return null;
 

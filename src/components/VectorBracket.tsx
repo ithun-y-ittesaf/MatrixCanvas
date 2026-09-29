@@ -13,6 +13,9 @@ interface VectorBracketProps {
   id: string;
   x: number;
   y: number;
+  // Present only for a 3D vector: adds a third cell and routes edits to
+  // updateVector3d instead of updateVector.
+  z?: number;
   color: string;
   // True only for the row just created this session — starts blank with
   // the cursor already in x, rather than pre-filled with a default the
@@ -29,9 +32,15 @@ interface VectorBracketProps {
 // floating card next to the add menu) and EquationPanel (the same vector
 // inline in "Mv = v'") — both read/write the same store vector via
 // updateVector, so editing either place updates the other live.
-export default function VectorBracket({ id, x, y, color, autoFocusX }: VectorBracketProps) {
+export default function VectorBracket({ id, x, y, z, color, autoFocusX }: VectorBracketProps) {
   const updateVector = useAppStore((s) => s.updateVector);
-  const [raw, setRaw] = useState<[string, string]>(autoFocusX ? ['', ''] : [fmt(x, 6), fmt(y, 6)]);
+  const updateVector3d = useAppStore((s) => s.updateVector3d);
+  const is3d = z !== undefined;
+  const dim = is3d ? 3 : 2;
+  const current = is3d ? [x, y, z] : [x, y];
+  const [raw, setRaw] = useState<string[]>(
+    autoFocusX ? current.map(() => '') : current.map((n) => fmt(n, 6)),
+  );
 
   // The (x, y) this instance itself last told the store to become —
   // stamped *proactively* inside commit(), before the store's update
@@ -49,21 +58,21 @@ export default function VectorBracket({ id, x, y, color, autoFocusX }: VectorBra
   // state and takes the no-op branch). A plain ref mutated here bypasses
   // that bookkeeping, so the double-invoke can leave `raw` and the ref
   // disagreeing about which one "won".
-  const [lastKnown, setLastKnown] = useState<[number, number]>([x, y]);
-  if (lastKnown[0] !== x || lastKnown[1] !== y) {
-    setLastKnown([x, y]);
-    setRaw([fmt(x, 6), fmt(y, 6)]);
+  const [lastKnown, setLastKnown] = useState<number[]>(current);
+  if (lastKnown.length !== current.length || lastKnown.some((n, i) => n !== current[i])) {
+    setLastKnown(current);
+    setRaw(current.map((n) => fmt(n, 6)));
   }
 
   const xInputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
-  const cellIds = [`${uid}x`, `${uid}y`] as const;
+  const cellIds = is3d ? [`${uid}x`, `${uid}y`, `${uid}z`] : [`${uid}x`, `${uid}y`];
 
   // \phantom{0} keeps a blank cell's measured width from collapsing to
   // zero while it's mid-edit (e.g. just cleared to type a new value).
   const cellTex = (v: string) => (v === '' ? '\\phantom{0}' : v);
   const tex = `\\textcolor{${color}}{\\begin{bmatrix}` +
-    `\\htmlId{${cellIds[0]}}{${cellTex(raw[0])}} \\\\ \\htmlId{${cellIds[1]}}{${cellTex(raw[1])}}` +
+    cellIds.map((cid, i) => `\\htmlId{${cid}}{${cellTex(raw[i] ?? '')}}`).join(' \\\\ ') +
     `\\end{bmatrix}}`;
   const anchorRef = useRef<HTMLSpanElement>(null);
   const { containerRef, rects } = useKatexOverlay(tex, cellIds, anchorRef);
@@ -78,20 +87,21 @@ export default function VectorBracket({ id, x, y, color, autoFocusX }: VectorBra
     if (autoFocusX && xCellMeasured) xInputRef.current?.focus();
   }, [autoFocusX, xCellMeasured]);
 
-  const commit = (which: 0 | 1, val: string) => {
-    setRaw((r) => (which === 0 ? [val, r[1]] : [r[0], val]));
+  const commit = (which: number, val: string) => {
+    setRaw((r) => r.map((old, i) => (i === which ? val : old)));
     const n = parseFloat(val);
     if (!isNaN(n)) {
-      const next: [number, number] = which === 0 ? [n, y] : [x, n];
+      const next = current.map((old, i) => (i === which ? n : old));
       setLastKnown(next);
-      updateVector(id, next[0], next[1]);
+      if (is3d) updateVector3d(id, next[0], next[1], next[2]);
+      else updateVector(id, next[0], next[1]);
     }
   };
 
   return (
     <span ref={anchorRef} className="relative inline-block select-none" style={{ fontSize: FONT_PX, lineHeight: 1 }}>
       <span ref={containerRef} className="inline-block align-top" />
-      {([0, 1] as const).map((which) => {
+      {Array.from({ length: dim }, (_, which) => {
         const rect = rects[cellIds[which]];
         if (!rect) return null;
         return (
@@ -100,7 +110,7 @@ export default function VectorBracket({ id, x, y, color, autoFocusX }: VectorBra
             ref={which === 0 ? xInputRef : undefined}
             type="text"
             inputMode="decimal"
-            aria-label={which === 0 ? 'Vector x' : 'Vector y'}
+            aria-label={`Vector ${'xyz'[which]}`}
             value={raw[which]}
             onFocus={(e) => e.target.select()}
             onChange={(e) => commit(which, e.target.value)}
