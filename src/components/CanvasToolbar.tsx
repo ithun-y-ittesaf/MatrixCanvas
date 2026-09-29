@@ -1,13 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useAppStore } from '../store/appStore';
+import { useAppStore, type Overlay3d } from '../store/appStore';
 import PropertiesPanel from './PropertiesPanel';
+import PropertiesPanel3D from './PropertiesPanel3D';
 import { useCopyLink } from '../utils/useCopyLink';
 import { katexHtml } from '../utils/katexHtml';
-import { PRESETS } from '../utils/presets';
-import { ShareIcon, BracketsIcon } from './icons';
+import { PRESETS, PRESETS_3D } from '../utils/presets';
+import { ShareIcon, BracketsIcon, LayersIcon } from './icons';
 
-type PopoverKind = 'presets' | 'properties' | null;
+type PopoverKind = 'presets' | 'properties' | 'overlays' | null;
+
+// 3D-only "Show" toggles: geometric extras drawn from the current matrix.
+const OVERLAY_OPTIONS: { key: Overlay3d; label: string; hint: string }[] = [
+  { key: 'unitSphere', label: 'Unit sphere', hint: 'Watch it become an ellipsoid' },
+  { key: 'singularAxes', label: 'Singular axes', hint: 'Ellipsoid semi-axes (σᵢ·uᵢ)' },
+  { key: 'eigenvectors', label: 'Eigenvectors', hint: 'Lines the transform keeps fixed' },
+  { key: 'nullSpace', label: 'Null space', hint: 'Everything sent to the origin' },
+  { key: 'columnSpace', label: 'Column space', hint: 'Everything the matrix can reach' },
+];
 
 function ToolbarButton({
   active = false,
@@ -46,7 +56,12 @@ function ToolbarButton({
 // underneath it, so neither needs a toolbar slot of its own any more.
 export default function CanvasToolbar() {
   const isLessonActive = useAppStore((s) => s.activeLesson !== null);
+  const mode = useAppStore((s) => s.mode);
+  const is3d = mode === '3d';
   const setMatrixValues = useAppStore((s) => s.setMatrixValues);
+  const setMatrixValues3d = useAppStore((s) => s.setMatrixValues3d);
+  const overlays3d = useAppStore((s) => s.overlays3d);
+  const toggleOverlay3d = useAppStore((s) => s.toggleOverlay3d);
   const { copied, copyLink } = useCopyLink();
   const [open, setOpen] = useState<PopoverKind>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -98,27 +113,75 @@ export default function CanvasToolbar() {
             dangerouslySetInnerHTML={katexHtml('x^2')}
           />
         </ToolbarButton>
+
+        {is3d && (
+          <ToolbarButton title="Show overlays" active={open === 'overlays'} onClick={() => toggle('overlays')}>
+            <LayersIcon className="w-[18px] h-[18px]" />
+          </ToolbarButton>
+        )}
       </div>
 
       {open === 'properties' && (
         <div className="rounded-xl border border-line bg-surface/85 backdrop-blur-md shadow-2xl px-4 py-3" style={{ minWidth: 190 }}>
           <p className="text-ink-faint uppercase tracking-widest text-[10px] mb-1.5">Properties</p>
-          <PropertiesPanel />
+          {is3d ? <PropertiesPanel3D /> : <PropertiesPanel />}
+        </div>
+      )}
+
+      {open === 'overlays' && is3d && (
+        <div className="rounded-xl border border-line bg-surface/85 backdrop-blur-md shadow-2xl py-1.5" style={{ minWidth: 220 }}>
+          <p className="text-ink-faint uppercase tracking-widest text-[10px] px-3 pt-1 pb-1">Show</p>
+          {OVERLAY_OPTIONS.map(({ key, label, hint }) => {
+            const on = overlays3d.includes(key);
+            return (
+              <button
+                key={key}
+                onClick={() => toggleOverlay3d(key)}
+                aria-pressed={on}
+                className="w-full flex items-start gap-2.5 px-3 py-1.5 text-left hover:bg-white/5 transition-colors"
+              >
+                <span
+                  className={`mt-0.5 w-3.5 h-3.5 rounded border shrink-0 flex items-center justify-center text-[10px] leading-none ${
+                    on ? 'bg-accent border-accent text-white' : 'border-line-strong text-transparent'
+                  }`}
+                >
+                  ✓
+                </span>
+                <span className="flex flex-col">
+                  <span className={`text-sm ${on ? 'text-ink' : 'text-ink-dim'}`}>{label}</span>
+                  <span className="text-[10px] text-ink-faint">{hint}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 
       {open === 'presets' && (
         <div className="rounded-xl border border-line bg-surface/85 backdrop-blur-md shadow-2xl overflow-hidden" style={{ minWidth: 180 }}>
-          {PRESETS.map((p) => (
-            <button
-              key={p.label}
-              onClick={() => { setMatrixValues(p.values); setOpen(null); }}
-              className="block w-full text-left px-3 py-2 text-sm text-ink-dim
-                         hover:bg-white/5 hover:text-ink transition-colors"
-            >
-              {p.label}
-            </button>
-          ))}
+          <div className={is3d ? 'max-h-[60vh] overflow-y-auto' : undefined}>
+            {is3d
+              ? PRESETS_3D.map((p) => (
+                  <button
+                    key={p.label}
+                    onClick={() => { setMatrixValues3d(p.values); setOpen(null); }}
+                    className="block w-full text-left px-3 py-2 text-sm text-ink-dim
+                               hover:bg-white/5 hover:text-ink transition-colors"
+                  >
+                    {p.label}
+                  </button>
+                ))
+              : PRESETS.map((p) => (
+                  <button
+                    key={p.label}
+                    onClick={() => { setMatrixValues(p.values); setOpen(null); }}
+                    className="block w-full text-left px-3 py-2 text-sm text-ink-dim
+                               hover:bg-white/5 hover:text-ink transition-colors"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+          </div>
         </div>
       )}
     </div>

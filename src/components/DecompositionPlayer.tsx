@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { DecompositionSequence } from '../math/decompositionSequences';
+import type { DecompositionSequence3d } from '../math/decompositionSequences3d';
+import type { Matrix2x2Values } from '../math/Matrix2x2';
+import type { Matrix3x3Values } from '../math/Matrix3x3';
 import { useAppStore } from '../store/appStore';
 
 // Drives TransformCanvas through a decomposition's stop sequence, one tween
@@ -27,20 +30,36 @@ import { useAppStore } from '../store/appStore';
 // the caller (via `className`) since it's meant to be usable in more than
 // one layout (standalone demo, or embedded in-flow by LessonRunner inside
 // LessonDock).
+//
+// Works for both dimensions: a 3x3 sequence (decompositionSequences3d) drives
+// the 3D canvas through triggerAnimationFrom3d, a 2x2 one the 2D canvas through
+// triggerAnimationFrom.
 interface DecompositionPlayerProps {
-  sequence: DecompositionSequence;
+  sequence: DecompositionSequence | DecompositionSequence3d;
   className?: string;
 }
 
 export default function DecompositionPlayer({ sequence, className }: DecompositionPlayerProps) {
-  const triggerAnimationFrom = useAppStore((s) => s.triggerAnimationFrom);
+  const triggerAnimationFrom2d = useAppStore((s) => s.triggerAnimationFrom);
+  const triggerAnimationFrom3d = useAppStore((s) => s.triggerAnimationFrom3d);
+  const is3d = sequence.start.length === 3;
+  const triggerAnimationFrom = (
+    from: Matrix2x2Values | Matrix3x3Values,
+    to: Matrix2x2Values | Matrix3x3Values,
+  ) => {
+    if (is3d) triggerAnimationFrom3d(from as Matrix3x3Values, to as Matrix3x3Values);
+    else triggerAnimationFrom2d(from as Matrix2x2Values, to as Matrix2x2Values);
+  };
 
   // 0 = sitting at sequence.start (nothing animated yet); N = fully at
   // sequence.steps[N - 1].matrix.
   const [stepIndex, setStepIndex] = useState(0);
 
   const stops = useMemo(
-    () => [sequence.start, ...sequence.steps.map((step) => step.matrix)],
+    (): (Matrix2x2Values | Matrix3x3Values)[] => [
+      sequence.start,
+      ...sequence.steps.map((step) => step.matrix),
+    ],
     [sequence],
   );
 

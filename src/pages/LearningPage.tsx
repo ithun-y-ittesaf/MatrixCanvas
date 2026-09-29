@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
 import { ALL_LESSONS } from '../lessons';
-import type { Lesson, TrackType } from '../lessons/types';
+import { ALL_LESSONS_3D } from '../lessons3d';
+import type { AnyLesson, TrackType } from '../lessons/types';
 
 const TRACKS: TrackType[] = ['beginner', 'intermediate', 'decompositions'];
 
@@ -14,12 +15,16 @@ const TRACK_LABELS: Record<TrackType, string> = {
 export default function LearningPage() {
   const navigate = useNavigate();
   const startLesson = useAppStore((s) => s.startLesson);
+  // The 2D | 3D toggle in the NavBar decides which curriculum is listed;
+  // both cover the same tracks and lessons.
+  const mode = useAppStore((s) => s.mode);
+  const curriculum: AnyLesson[] = mode === '3d' ? ALL_LESSONS_3D : ALL_LESSONS;
 
   // Starts the lesson in the store, then routes to the Playground — where
   // LessonRunner (already mounted there) picks up activeLesson and takes
   // over. Order matters: the store update happens before navigating so
   // there's no frame where Playground renders with no active lesson.
-  const handleStart = (lesson: Lesson) => {
+  const handleStart = (lesson: AnyLesson) => {
     startLesson(lesson);
     navigate('/');
   };
@@ -30,12 +35,14 @@ export default function LearningPage() {
         <h1 className="text-2xl font-bold text-ink mb-1">Learning Pathway</h1>
         <p className="text-sm text-ink-dim mb-8">
           Guided, step-by-step walkthroughs. Starting one locks the Playground to just
-          what the lesson needs — exit anytime to explore freely.
+          what the lesson needs — exit anytime to explore freely.{' '}
+          Showing the <span className="text-ink font-semibold">{mode === '3d' ? '3D' : '2D'}</span> lessons
+          — switch with the 2D | 3D toggle above.
         </p>
 
         <div className="flex flex-col gap-6">
           {TRACKS.map((track) => {
-            const lessons = ALL_LESSONS.filter((l) => l.track === track);
+            const lessons = curriculum.filter((l) => l.track === track);
             return (
               <div key={track}>
                 <p className="text-xs font-semibold uppercase tracking-widest text-ink-faint mb-2">
